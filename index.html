@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المصنع - الإصدار الحادي عشر</title>
+    <title>نظام إدارة المصنع - الإصدار الثاني عشر (محمي)</title>
     <style>
         :root {
             --primary: #1a252f; --secondary: #2c3e50; --accent: #2980b9;
@@ -40,8 +40,8 @@
         h4 { margin-bottom: 15px; color: var(--accent); font-size: 1.1rem;}
         
         .form-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .form-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef;}
-        .form-row > div { flex: 1; }
+        .form-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef; flex-wrap: wrap;}
+        .form-row > div { flex: 1; min-width: 150px; }
         label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--secondary); }
         input, select { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.95rem; transition: 0.3s;}
         input:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(41, 128, 185, 0.2); }
@@ -117,8 +117,9 @@
 
     <div id="app-container">
         <div class="sidebar no-print">
-            <h2>إدارة المصنع V11</h2>
-            <button class="nav-btn active" data-target="inventory">المخزون والجرد</button>
+            <h2>إدارة المصنع V12</h2>
+            <button class="nav-btn active" data-target="inventory">أرصدة المخزون</button>
+            <button class="nav-btn" data-target="adjustments">تسويات الجرد</button>
             <button class="nav-btn" data-target="raw-materials">المواد الأولية</button>
             <button class="nav-btn" data-target="products">المنتجات (الوصفات)</button>
             <button class="nav-btn" data-target="purchases">فواتير المشتريات</button>
@@ -130,7 +131,7 @@
         <div class="main-content no-print">
             
             <div id="inventory" class="section active">
-                <h3>تقييم المخزون المالي</h3>
+                <h3>أرصدة المخزون الحالية</h3>
                 <div class="summary-cards">
                     <div class="card"><h4>قيمة المواد الأولية</h4><div class="value" id="total-val-rm">0.00</div></div>
                     <div class="card"><h4>قيمة المنتجات الجاهزة</h4><div class="value" id="total-val-prd">0.00</div></div>
@@ -138,15 +139,37 @@
                 </div>
                 
                 <h4>أرصدة المواد الأولية</h4>
-                <table><thead><tr><th>المادة</th><th>الكمية المتوفرة</th><th>متوسط التكلفة</th><th>القيمة</th><th>إجراء</th></tr></thead><tbody id="table-inv-rm"></tbody></table>
+                <table><thead><tr><th>المادة</th><th>الكمية المتوفرة</th><th>متوسط التكلفة</th><th>القيمة الإجمالية</th></tr></thead><tbody id="table-inv-rm"></tbody></table>
                 <div id="pag-inv-rm" class="pagination"></div>
                 
                 <h4 class="mt-3">أرصدة المنتجات الجاهزة</h4>
-                <table><thead><tr><th>المنتج</th><th>الكمية المتوفرة</th><th>متوسط التكلفة</th><th>القيمة</th><th>إجراء</th></tr></thead><tbody id="table-inv-prd"></tbody></table>
+                <table><thead><tr><th>المنتج</th><th>الكمية المتوفرة</th><th>متوسط التكلفة</th><th>القيمة الإجمالية</th></tr></thead><tbody id="table-inv-prd"></tbody></table>
                 <div id="pag-inv-prd" class="pagination"></div>
+            </div>
+
+            <div id="adjustments" class="section">
+                <h3>تقرير تسوية جرد</h3>
+                <div class="form-row">
+                    <div><label>نوع الصنف</label><select id="adj-item-type" onchange="updateAdjItemSelect()"><option value="rm">مادة أولية</option><option value="prd">منتج جاهز</option></select></div>
+                    <div><label>الصنف</label><select id="adj-item" onchange="updateAdjUnit()"></select></div>
+                    <div>
+                        <label>الكمية الفعلية الموجودة</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" id="adj-qty">
+                            <select id="adj-unit"></select>
+                        </div>
+                    </div>
+                    <div><button type="button" class="btn btn-warning" onclick="addAdjDraft()">+ إضافة للجرد</button></div>
+                </div>
+                <div class="draft-box" id="adj-draft-container" style="display: none; border-color: var(--warning);">
+                    <h4>الأصناف في تقرير الجرد الحالي:</h4>
+                    <table><thead><tr><th>الصنف</th><th>النوع</th><th>الكمية المدخلة</th><th>إجراء</th></tr></thead><tbody id="table-adj-draft"></tbody></table>
+                    <br>
+                    <button class="btn btn-success" onclick="finalizeAdjustment()">اعتماد وحفظ تقرير الجرد</button>
+                </div>
                 
-                <h3 class="mt-3" style="border-top: 2px solid var(--light); padding-top:20px;">سجل تسويات الجرد</h3>
-                <table><thead><tr><th>التاريخ</th><th>الصنف</th><th>الكمية الدفترية</th><th>الكمية الفعلية</th><th>الفرق</th><th>أثر الجرد</th></tr></thead><tbody id="table-adjustments"></tbody></table>
+                <h3 class="mt-3">سجل تقارير الجرد</h3>
+                <table><thead><tr><th>رقم التقرير</th><th>التاريخ</th><th>عدد الأصناف</th><th>صافي الأثر المالي</th><th>تفاصيل</th></tr></thead><tbody id="table-adjustments"></tbody></table>
                 <div id="pag-adj" class="pagination"></div>
             </div>
 
@@ -173,7 +196,7 @@
                 <form onsubmit="addProduct(event)">
                     <div class="form-group">
                         <div><label>اسم المنتج الجاهز</label><input type="text" id="prd-name" required></div>
-                        <div><label>وحدة المنتج (للبيع والتصنيع)</label><select id="prd-unit"></select></div>
+                        <div><label>وحدة المنتج</label><select id="prd-unit"></select></div>
                     </div>
                     <div class="draft-box">
                         <h4>مكونات التصنيع (للوحدة الواحدة):</h4>
@@ -266,30 +289,6 @@
     </div>
 
     <!-- Modals -->
-    <div id="modal-adjust" class="modal no-print">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header"><h3>تسوية جرد المخزون</h3><button class="btn btn-danger btn-sm" onclick="closeModal('modal-adjust')">إغلاق</button></div>
-            <form onsubmit="saveAdjustment(event)">
-                <input type="hidden" id="adj-id">
-                <input type="hidden" id="adj-type">
-                <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <p style="margin: 0 0 10px 0; font-size: 1.1rem;">الصنف: <strong id="adj-name" style="color: var(--primary);"></strong></p>
-                    <p style="margin: 0;">الرصيد الدفتري الحالي: <strong id="adj-current" dir="ltr" style="color: var(--accent);"></strong></p>
-                </div>
-                <div class="form-group">
-                    <div>
-                        <label>أدخل الكمية الفعلية الموجودة الآن:</label>
-                        <div class="input-group">
-                            <input type="number" step="0.01" id="adj-qty" required>
-                            <select id="adj-unit"></select>
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-warning" style="width: 100%;">اعتماد الجرد</button>
-            </form>
-        </div>
-    </div>
-
     <div id="modal-invoice" class="modal">
         <div class="modal-content">
             <div id="print-area">
@@ -302,7 +301,7 @@
                     <tbody id="print-tb"></tbody>
                 </table>
                 <div style="margin-top: 20px; text-align: left; font-size: 1.2rem; font-weight: bold; color: var(--primary);">
-                    الإجمالي: <span id="print-total">0.00</span>
+                    <span id="print-total-label">الإجمالي:</span> <span id="print-total" dir="ltr">0.00</span>
                 </div>
             </div>
             <div class="no-print flex-between" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; display: flex; justify-content: space-between;">
@@ -354,12 +353,12 @@
         let db = { rawMaterials: [], products: [], purchases: [], sales: [], manufacturing: [], adjustments: [] };
         const ITEMS_PER_PAGE = 10;
         let pState = { rm: 1, prd: 1, pur: 1, sal: 1, mfg: 1, invRm: 1, invPrd: 1, adj: 1 };
-        let draftPur = [], draftSal = [], draftMfg = [];
+        let draftPur = [], draftSal = [], draftMfg = [], draftAdj = [];
 
         function attemptLogin() {
             const code = document.getElementById('login-code').value;
             if(code === '5856') {
-                sessionStorage.setItem('factoryAuth_V11', 'true');
+                sessionStorage.setItem('factoryAuth_V12', 'true');
                 grantAccess();
             } else {
                 document.getElementById('login-error').style.display = 'block';
@@ -375,7 +374,7 @@
         }
 
         function logout() {
-            sessionStorage.removeItem('factoryAuth_V11');
+            sessionStorage.removeItem('factoryAuth_V12');
             location.reload();
         }
 
@@ -395,7 +394,6 @@
                 }
             } catch (err) {
                 console.error("Firebase load error:", err);
-                alert("تعذر الاتصال بقاعدة البيانات السحابية. تأكد من إعدادات Firebase.");
             } finally {
                 document.getElementById('cloud-loader').style.display = 'none';
                 refreshUI();
@@ -412,12 +410,11 @@
                 });
             } catch (err) {
                 console.error("Firebase save error:", err);
-                alert("فشل رفع البيانات للسحابة، تحقق من الاتصال بالإنترنت.");
             }
         }
 
         window.onload = () => {
-            if(sessionStorage.getItem('factoryAuth_V11') === 'true') {
+            if(sessionStorage.getItem('factoryAuth_V12') === 'true') {
                 grantAccess();
             } else {
                 document.getElementById('login-code').focus();
@@ -446,14 +443,13 @@
             const prdOpts = db.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             document.getElementById('sal-prd').innerHTML = prdOpts; document.getElementById('mfg-prd').innerHTML = prdOpts;
             
-            updatePurUnit(); updateSalUnit(); updateMfgUnit();
+            updatePurUnit(); updateSalUnit(); updateMfgUnit(); updateAdjItemSelect();
         }
 
         function updatePurUnit() {
-            const rmId = document.getElementById('pur-rm').value;
-            const rm = db.rawMaterials.find(r => r.id === rmId);
+            const rm = db.rawMaterials.find(r => r.id === document.getElementById('pur-rm').value);
             const select = document.getElementById('pur-unit');
-            if(rm) select.innerHTML = `<option value="PUNIT">${rm.pUnit} (وحدة الشراء)</option><option value="MUNIT">${rm.mUnit} (وحدة التصنيع)</option>`;
+            if(rm) select.innerHTML = `<option value="PUNIT">${rm.pUnit} (شراء)</option><option value="MUNIT">${rm.mUnit} (تصنيع)</option>`;
             else select.innerHTML = '';
         }
         function updateSalUnit() {
@@ -465,6 +461,64 @@
             if(prd) document.getElementById('mfg-unit-label').innerText = prd.unit;
         }
 
+        // --- Adjustment Logic ---
+        function updateAdjItemSelect() {
+            const type = document.getElementById('adj-item-type').value;
+            const sel = document.getElementById('adj-item');
+            if(type === 'rm') sel.innerHTML = db.rawMaterials.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            else sel.innerHTML = db.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            updateAdjUnit();
+        }
+        
+        function updateAdjUnit() {
+            const type = document.getElementById('adj-item-type').value;
+            const id = document.getElementById('adj-item').value;
+            const sel = document.getElementById('adj-unit');
+            if(type === 'rm') {
+                const item = db.rawMaterials.find(r=>r.id===id);
+                if(item) sel.innerHTML = `<option value="MUNIT">${item.mUnit} (تصنيع)</option><option value="PUNIT">${item.pUnit} (شراء)</option>`;
+            } else {
+                const item = db.products.find(p=>p.id===id);
+                if(item) sel.innerHTML = `<option value="UNIT">${item.unit}</option>`;
+            }
+        }
+
+        function addAdjDraft() {
+            const type = document.getElementById('adj-item-type').value;
+            const id = document.getElementById('adj-item').value;
+            const qty = parseFloat(document.getElementById('adj-qty').value);
+            const unitType = document.getElementById('adj-unit').value;
+
+            if(!id || isNaN(qty) || qty < 0) return alert('أدخل كمية صحيحة');
+            if(draftAdj.find(i => i.itemId === id && i.type === type)) return alert('الصنف مضاف مسبقاً في مسودة الجرد');
+
+            const item = type === 'rm' ? db.rawMaterials.find(r=>r.id===id) : db.products.find(p=>p.id===id);
+            let newStockBase = (type === 'rm' && unitType === 'PUNIT') ? qty * item.factor : qty;
+            let displayUnit = type === 'rm' ? (unitType === 'PUNIT' ? item.pUnit : item.mUnit) : item.unit;
+
+            const oldStockBase = item.stock;
+            const diffQty = newStockBase - oldStockBase;
+            const diffValue = diffQty * item.avgCost;
+
+            draftAdj.push({ itemId: id, type: type, itemName: item.name, qtyEntered: qty, unitEntered: displayUnit, oldStock: oldStockBase, newStock: newStockBase, diffQty: diffQty, diffValue: diffValue, tempId: Date.now() });
+            
+            document.getElementById('adj-qty').value = '';
+            renderDrafts();
+        }
+
+        function finalizeAdjustment() {
+            if(!draftAdj.length) return;
+            draftAdj.forEach(i => {
+                const item = i.type === 'rm' ? db.rawMaterials.find(r=>r.id===i.itemId) : db.products.find(p=>p.id===i.itemId);
+                item.stock = i.newStock;
+                if(item.stock === 0) item.avgCost = 0;
+            });
+            const totalEffect = draftAdj.reduce((sum, i) => sum + i.diffValue, 0);
+            db.adjustments.push({ id: 'ADJ-'+genId(), date: new Date().toLocaleString(), items: [...draftAdj], totalValue: totalEffect });
+            draftAdj = []; pState.adj = 1; saveDB(); alert('تم حفظ تقرير الجرد بنجاح');
+        }
+
+        // --- Basic Setup ---
         function addRawMaterial(e) {
             e.preventDefault();
             db.rawMaterials.push({ id: genId(), name: document.getElementById('rm-name').value, pUnit: document.getElementById('rm-punit').value, mUnit: document.getElementById('rm-munit').value, factor: parseFloat(document.getElementById('rm-factor').value), stock: 0, avgCost: 0 });
@@ -557,33 +611,6 @@
             draftMfg = []; pState.mfg = 1; saveDB(); alert('تم التصنيع بنجاح!');
         }
 
-        function openAdjust(type, id) {
-            const item = (type === 'rm') ? db.rawMaterials.find(i => i.id === id) : db.products.find(i => i.id === id);
-            document.getElementById('adj-id').value = id; document.getElementById('adj-type').value = type;
-            document.getElementById('adj-name').innerText = item.name;
-            const unitSelect = document.getElementById('adj-unit');
-            if(type === 'rm') {
-                document.getElementById('adj-current').innerText = `${item.stock.toFixed(2)} ${item.mUnit}`;
-                unitSelect.innerHTML = `<option value="MUNIT">${item.mUnit} (وحدة التصنيع)</option><option value="PUNIT">${item.pUnit} (وحدة الشراء)</option>`;
-            } else {
-                document.getElementById('adj-current').innerText = `${item.stock.toFixed(2)} ${item.unit}`;
-                unitSelect.innerHTML = `<option value="UNIT">${item.unit}</option>`;
-            }
-            document.getElementById('adj-qty').value = ''; document.getElementById('modal-adjust').style.display = 'flex';
-        }
-
-        function saveAdjustment(e) {
-            e.preventDefault();
-            const id = document.getElementById('adj-id').value, type = document.getElementById('adj-type').value, inputQty = parseFloat(document.getElementById('adj-qty').value), selectedUnit = document.getElementById('adj-unit').value;
-            if(inputQty < 0) return alert('الكمية لا يمكن أن تكون سالبة');
-            const item = (type === 'rm') ? db.rawMaterials.find(i => i.id === id) : db.products.find(i => i.id === id);
-            let newStockBase = (type === 'rm' && selectedUnit === 'PUNIT') ? inputQty * item.factor : inputQty;
-            const oldStock = item.stock, dQty = newStockBase - oldStock, dVal = dQty * item.avgCost; 
-            item.stock = newStockBase; if(item.stock === 0) item.avgCost = 0;
-            db.adjustments.push({ id: 'ADJ-'+genId(), date: new Date().toLocaleString(), itemName: item.name, oldStock: oldStock, newStock: newStockBase, unit: (type === 'rm' ? item.mUnit : item.unit), diffQty: dQty, diffValue: dVal });
-            closeModal('modal-adjust'); pState.adj = 1; saveDB();
-        }
-
         function renderDrafts() {
             const drPur = document.getElementById('pur-draft-container'); drPur.style.display = draftPur.length ? 'block' : 'none';
             document.getElementById('table-pur-draft').innerHTML = draftPur.map(i => `<tr><td>${i.rmName}</td><td>${i.qtyEntered} ${i.unitEntered}</td><td>${formatMoney(i.totalCost)}</td><td><button class="btn btn-danger btn-sm" onclick="draftPur=draftPur.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join('');
@@ -595,29 +622,43 @@
 
             const drMfg = document.getElementById('mfg-draft-container'); drMfg.style.display = draftMfg.length ? 'block' : 'none';
             document.getElementById('table-mfg-draft').innerHTML = draftMfg.map(i => `<tr><td>${i.prdName}</td><td>${i.qty} ${i.unit}</td><td><button class="btn btn-danger btn-sm" onclick="draftMfg=draftMfg.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join('');
+
+            const drAdj = document.getElementById('adj-draft-container'); drAdj.style.display = draftAdj.length ? 'block' : 'none';
+            document.getElementById('table-adj-draft').innerHTML = draftAdj.map(i => `<tr><td>${i.itemName}</td><td>${i.type === 'rm' ? 'مادة أولية' : 'منتج جاهز'}</td><td>${i.qtyEntered} ${i.unitEntered}</td><td><button class="btn btn-danger btn-sm" onclick="draftAdj=draftAdj.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join('');
         }
 
         function viewTransaction(type, id) {
             let data = null, title = '', th = '', tb = '';
+            document.getElementById('print-total-label').innerText = 'الإجمالي:';
+            
             if(type === 'PUR') {
                 data = db.purchases.find(x => x.id === id); title = 'فاتورة مشتريات';
                 th = `<tr><th style="padding:10px; border:1px solid #ddd;">المادة</th><th style="padding:10px; border:1px solid #ddd;">الكمية</th><th style="padding:10px; border:1px solid #ddd;">التكلفة</th></tr>`;
                 tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.rmName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qtyEntered} ${i.unitEntered}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalCost)}</td></tr>`).join('');
+                document.getElementById('print-total').innerText = formatMoney(data.totalCost);
             } else if(type === 'SAL') {
                 data = db.sales.find(x => x.id === id); title = 'فاتورة مبيعات';
                 th = `<tr><th style="padding:10px; border:1px solid #ddd;">المنتج</th><th style="padding:10px; border:1px solid #ddd;">الكمية</th><th style="padding:10px; border:1px solid #ddd;">السعر</th></tr>`;
                 tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.prdName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qty} ${i.unit}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalSale)}</td></tr>`).join('');
+                document.getElementById('print-total').innerText = formatMoney(data.totalSale);
             } else if(type === 'MFG') {
                 data = db.manufacturing.find(x => x.id === id); title = 'أمر تصنيع (إنتاج)';
                 th = `<tr><th style="padding:10px; border:1px solid #ddd;">المنتج</th><th style="padding:10px; border:1px solid #ddd;">الكمية المنتجة</th><th style="padding:10px; border:1px solid #ddd;">المواد المستهلكة</th><th style="padding:10px; border:1px solid #ddd;">تكلفة الوحدة</th><th style="padding:10px; border:1px solid #ddd;">التكلفة الإجمالية</th></tr>`;
-                tb = data.items.map(i => {
-                    let unitCost = i.qty > 0 ? (i.totalCost / i.qty) : 0;
-                    return `<tr><td style="padding:10px; border:1px solid #ddd;">${i.prdName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qty} ${i.unit}</td><td style="padding:10px; border:1px solid #ddd; font-size:0.85rem;">${i.consumedText}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(unitCost)}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalCost)}</td></tr>`;
-                }).join('');
+                tb = data.items.map(i => { let uCost = i.qty > 0 ? (i.totalCost / i.qty) : 0; return `<tr><td style="padding:10px; border:1px solid #ddd;">${i.prdName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qty} ${i.unit}</td><td style="padding:10px; border:1px solid #ddd; font-size:0.85rem;">${i.consumedText}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(uCost)}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalCost)}</td></tr>`; }).join('');
+                document.getElementById('print-total').innerText = formatMoney(data.totalCost);
+            } else if(type === 'ADJ') {
+                data = db.adjustments.find(x => x.id === id); title = 'تقرير تسوية جرد';
+                document.getElementById('print-total-label').innerText = 'الأثر المالي الإجمالي:';
+                th = `<tr><th style="padding:10px; border:1px solid #ddd;">الصنف</th><th style="padding:10px; border:1px solid #ddd;">الرصيد الدفتري</th><th style="padding:10px; border:1px solid #ddd;">الرصيد الفعلي</th><th style="padding:10px; border:1px solid #ddd;">الفرق</th><th style="padding:10px; border:1px solid #ddd;">الأثر المالي</th></tr>`;
+                if(data.items) {
+                    tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.itemName}</td><td style="padding:10px; border:1px solid #ddd;">${i.oldStock.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${i.qtyEntered} ${i.unitEntered}</td><td style="padding:10px; border:1px solid #ddd;" dir="ltr">${i.diffQty > 0 ? '+'+i.diffQty.toFixed(2) : i.diffQty.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd; color:${i.diffValue>0?'var(--success)':'var(--danger)'};" dir="ltr">${formatMoney(i.diffValue)}</td></tr>`).join('');
+                }
+                document.getElementById('print-total').innerText = formatMoney(data.totalValue);
+                document.getElementById('print-total').style.color = data.totalValue > 0 ? 'var(--success)' : 'var(--danger)';
             }
             document.getElementById('print-title').innerText = title; document.getElementById('print-id').innerText = data.id;
             document.getElementById('print-date').innerText = data.date; document.getElementById('print-th').innerHTML = th;
-            document.getElementById('print-tb').innerHTML = tb; document.getElementById('print-total').innerText = formatMoney(data.totalCost || data.totalSale);
+            document.getElementById('print-tb').innerHTML = tb;
             document.getElementById('modal-invoice').style.display = 'flex';
         }
 
@@ -639,11 +680,19 @@
             renderPaginatedTable([...db.manufacturing].reverse(), 'table-mfg-reports', 'pag-mfg', 'mfg', m => `<tr><td>${m.id}</td><td>${m.date}</td><td>${m.items.length}</td><td>${formatMoney(m.totalCost)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('MFG', '${m.id}')">إظهار 👁️</button></td></tr>`);
 
             let tRm = 0, tPrd = 0; db.rawMaterials.forEach(r => tRm += (r.stock * r.avgCost)); db.products.forEach(p => tPrd += (p.stock * p.avgCost));
-            renderPaginatedTable(db.rawMaterials, 'table-inv-rm', 'pag-inv-rm', 'invRm', r => `<tr><td>${r.name}</td><td style="font-weight:bold;">${r.stock.toFixed(2)} ${r.mUnit}</td><td>${formatMoney(r.avgCost)}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(r.stock * r.avgCost)}</td><td><button class="btn btn-warning btn-sm" onclick="openAdjust('rm', '${r.id}')">تسوية جرد</button></td></tr>`);
-            renderPaginatedTable(db.products, 'table-inv-prd', 'pag-inv-prd', 'invPrd', p => `<tr><td>${p.name}</td><td style="font-weight:bold;">${p.stock.toFixed(2)} ${p.unit}</td><td>${formatMoney(p.avgCost)}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(p.stock * p.avgCost)}</td><td><button class="btn btn-warning btn-sm" onclick="openAdjust('prd', '${p.id}')">تسوية جرد</button></td></tr>`);
-            renderPaginatedTable([...db.adjustments].reverse(), 'table-adjustments', 'pag-adj', 'adj', a => `<tr><td>${a.date}</td><td>${a.itemName}</td><td>${a.oldStock.toFixed(2)} ${a.unit}</td><td>${a.newStock.toFixed(2)} ${a.unit}</td><td class="${a.diffValue > 0 ? 'text-success' : (a.diffValue < 0 ? 'text-danger' : '')}" dir="ltr">${a.diffQty.toFixed(2)}</td><td class="${a.diffValue > 0 ? 'text-success' : (a.diffValue < 0 ? 'text-danger' : '')}" dir="ltr">${a.diffValue > 0 ? 'فائض (+)' : (a.diffValue < 0 ? 'عجز (-)' : 'مطابق')} ${formatMoney(Math.abs(a.diffValue))}</td></tr>`);
+            renderPaginatedTable(db.rawMaterials, 'table-inv-rm', 'pag-inv-rm', 'invRm', r => `<tr><td>${r.name}</td><td style="font-weight:bold;">${r.stock.toFixed(2)} ${r.mUnit}</td><td>${formatMoney(r.avgCost)}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(r.stock * r.avgCost)}</td></tr>`);
+            renderPaginatedTable(db.products, 'table-inv-prd', 'pag-inv-prd', 'invPrd', p => `<tr><td>${p.name}</td><td style="font-weight:bold;">${p.stock.toFixed(2)} ${p.unit}</td><td>${formatMoney(p.avgCost)}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(p.stock * p.avgCost)}</td></tr>`);
+            
+            renderPaginatedTable([...db.adjustments].reverse(), 'table-adjustments', 'pag-adj', 'adj', a => {
+                if(a.items) {
+                    return `<tr><td>${a.id}</td><td>${a.date}</td><td>${a.items.length}</td><td class="${a.totalValue > 0 ? 'text-success' : (a.totalValue < 0 ? 'text-danger' : '')}" dir="ltr">${formatMoney(a.totalValue)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('ADJ', '${a.id}')">إظهار 👁️</button></td></tr>`;
+                } else {
+                    return `<tr><td>${a.id}</td><td>${a.date}</td><td>1 (نسخة قديمة)</td><td class="${a.diffValue > 0 ? 'text-success' : (a.diffValue < 0 ? 'text-danger' : '')}" dir="ltr">${formatMoney(a.diffValue)}</td><td>-</td></tr>`;
+                }
+            });
 
             document.getElementById('total-val-rm').innerText = formatMoney(tRm); document.getElementById('total-val-prd').innerText = formatMoney(tPrd); document.getElementById('total-val-all').innerText = formatMoney(tRm + tPrd);
+            document.getElementById('print-total').style.color = 'var(--primary)'; // Reset color globally
         }
     </script>
 </body>
