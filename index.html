@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المصنع - الإصدار الرابع عشر (محمي)</title>
+    <title>نظام إدارة المصنع - الإصدار الرابع عشر (معدل)</title>
     <style>
         :root {
             --primary: #1a252f; --secondary: #2c3e50; --accent: #2980b9;
@@ -151,12 +151,14 @@
                 <div id="pag-inv-prd" class="pagination"></div>
             </div>
 
+            <!-- قسم الجرد والهدر المدمج -->
             <div id="adjustments" class="section">
                 <div class="tab-buttons">
                     <button class="btn btn-outline active" id="tab-adj-btn" onclick="toggleAdjTab('adj')">تسوية جرد (تحديث الرصيد)</button>
                     <button class="btn btn-outline" id="tab-wst-btn" onclick="toggleAdjTab('wst')">تسجيل هدر وتوالف (خصم من الرصيد)</button>
                 </div>
 
+                <!-- شاشة تسوية الجرد (الرصيد الفعلي) -->
                 <div id="view-adj">
                     <h3>تقرير تسوية جرد فعلي</h3>
                     <div class="form-row">
@@ -183,6 +185,7 @@
                     <div id="pag-adj" class="pagination"></div>
                 </div>
 
+                <!-- شاشة تسجيل الهدر والتوالف -->
                 <div id="view-wst" style="display: none;">
                     <h3 style="color: var(--danger); border-bottom-color: var(--danger);">تقرير تسجيل هدر وتوالف</h3>
                     <div class="form-row" style="border-color: #f5c6cb; background: #f8d7da;">
@@ -623,7 +626,12 @@
         function refreshUI() {
             initDropdowns(); renderDrafts();
             renderPaginatedTable(db.rawMaterials, 'table-raw-materials', 'pag-rm', 'rm', r => `<tr><td>${r.name}</td><td>${r.pUnit}</td><td>${r.mUnit}</td><td>${r.factor}</td><td>${formatMoney(r.avgCost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditRM('${r.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deleteRM('${r.id}')">حذف</button></td></tr>`);
-            renderPaginatedTable(db.products, 'table-products', 'pag-prd', 'prd', p => { let cost = p.recipe.reduce((s, i) => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return s+(r?r.avgCost*i.qtyMUnit:0); }, 0); let txt = p.recipe.map(i => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return r ? `${i.qtyMUnit} ${r.mUnit} ${r.name}`:'<span class="text-danger">محذوف</span>'; }).join('<br>'); return `<tr><td>${p.name}</td><td>${p.unit}</td><td>${txt}</td><td>${formatMoney(cost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditPrd('${p.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deletePrd('${p.id}')">حذف</button></td></tr>`);
+            
+            renderPaginatedTable(db.products, 'table-products', 'pag-prd', 'prd', p => {
+                let cost = p.recipe.reduce((s, i) => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return s+(r?r.avgCost*i.qtyMUnit:0); }, 0);
+                let txt = p.recipe.map(i => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return r ? `${i.qtyMUnit} ${r.mUnit} ${r.name}`:'<span class="text-danger">محذوف</span>'; }).join('<br>');
+                return `<tr><td>${p.name}</td><td>${p.unit}</td><td>${txt}</td><td>${formatMoney(cost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditPrd('${p.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deletePrd('${p.id}')">حذف</button></td></tr>`;
+            });
 
             renderPaginatedTable([...db.purchases].reverse(), 'table-purchases', 'pag-purchases', 'pur', p => `<tr><td>${p.id}</td><td>${p.date}</td><td>${p.items.length}</td><td>${formatMoney(p.totalCost)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('PUR', '${p.id}')">إظهار 👁️</button></td></tr>`);
             renderPaginatedTable([...db.sales].reverse(), 'table-sales', 'pag-sales', 'sal', s => `<tr><td>${s.id}</td><td>${s.date}</td><td>${s.items.length}</td><td>${formatMoney(s.totalSale)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('SAL', '${s.id}')">إظهار 👁️</button></td></tr>`);
