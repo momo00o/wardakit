@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المصنع - الإصدار الثالث عشر (محمي)</title>
+    <title>نظام إدارة المصنع - الإصدار الرابع عشر (محمي)</title>
     <style>
         :root {
             --primary: #1a252f; --secondary: #2c3e50; --accent: #2980b9;
@@ -121,7 +121,7 @@
 
     <div id="app-container">
         <div class="sidebar no-print">
-            <h2>إدارة المصنع V13</h2>
+            <h2>إدارة المصنع V14</h2>
             <button class="nav-btn active" data-target="inventory">أرصدة المخزون</button>
             <button class="nav-btn" data-target="adjustments">تسويات الجرد والهدر</button>
             <button class="nav-btn" data-target="raw-materials">المواد الأولية</button>
@@ -151,14 +151,12 @@
                 <div id="pag-inv-prd" class="pagination"></div>
             </div>
 
-            <!-- قسم الجرد والهدر المدمج -->
             <div id="adjustments" class="section">
                 <div class="tab-buttons">
                     <button class="btn btn-outline active" id="tab-adj-btn" onclick="toggleAdjTab('adj')">تسوية جرد (تحديث الرصيد)</button>
                     <button class="btn btn-outline" id="tab-wst-btn" onclick="toggleAdjTab('wst')">تسجيل هدر وتوالف (خصم من الرصيد)</button>
                 </div>
 
-                <!-- شاشة تسوية الجرد (الرصيد الفعلي) -->
                 <div id="view-adj">
                     <h3>تقرير تسوية جرد فعلي</h3>
                     <div class="form-row">
@@ -185,7 +183,6 @@
                     <div id="pag-adj" class="pagination"></div>
                 </div>
 
-                <!-- شاشة تسجيل الهدر والتوالف -->
                 <div id="view-wst" style="display: none;">
                     <h3 style="color: var(--danger); border-bottom-color: var(--danger);">تقرير تسجيل هدر وتوالف</h3>
                     <div class="form-row" style="border-color: #f5c6cb; background: #f8d7da;">
@@ -388,7 +385,7 @@
 
     <script>
         const FIREBASE_URL = 'https://factory-917b1-default-rtdb.europe-west1.firebasedatabase.app/factoryDB.json';
-        const defaultUnits = ['KG', 'g', 'L', 'ml', 'كرتون', 'سبت', 'حبة', 'ربطة', 'قطعة'];
+        const defaultUnits = ['KG', 'g', 'L', 'ml', 'كرتون', 'سبت', 'حبة', 'ربطة', 'قطعة', 'كيس', 'خيشة', 'علبة', 'تنكة'];
         
         let db = { rawMaterials: [], products: [], purchases: [], sales: [], manufacturing: [], adjustments: [], wastage: [] };
         const ITEMS_PER_PAGE = 10;
@@ -398,7 +395,7 @@
         function attemptLogin() {
             const code = document.getElementById('login-code').value;
             if(code === '5856') {
-                sessionStorage.setItem('factoryAuth_V13', 'true');
+                sessionStorage.setItem('factoryAuth_V14', 'true');
                 grantAccess();
             } else {
                 document.getElementById('login-error').style.display = 'block';
@@ -414,7 +411,7 @@
         }
 
         function logout() {
-            sessionStorage.removeItem('factoryAuth_V13');
+            sessionStorage.removeItem('factoryAuth_V14');
             location.reload();
         }
 
@@ -455,7 +452,7 @@
         }
 
         window.onload = () => {
-            if(sessionStorage.getItem('factoryAuth_V13') === 'true') grantAccess();
+            if(sessionStorage.getItem('factoryAuth_V14') === 'true') grantAccess();
             else document.getElementById('login-code').focus();
         };
 
@@ -471,7 +468,6 @@
             });
         });
 
-        // Tabs Logic inside Adjustments Section
         function toggleAdjTab(tab) {
             document.getElementById('tab-adj-btn').classList.remove('active');
             document.getElementById('tab-wst-btn').classList.remove('active');
@@ -500,7 +496,6 @@
             updatePurUnit(); updateSalUnit(); updateMfgUnit(); updateAdjItemSelect(); updateWstItemSelect();
         }
 
-        // Dropdown Updates
         function updatePurUnit() {
             const rm = db.rawMaterials.find(r => r.id === document.getElementById('pur-rm').value);
             const select = document.getElementById('pur-unit');
@@ -532,7 +527,6 @@
             else { const item = db.products.find(p=>p.id===id); if(item) sel.innerHTML = `<option value="UNIT">${item.unit}</option>`; }
         }
 
-        // --- Adjustments (Count) Logic ---
         function addAdjDraft() {
             const type = document.getElementById('adj-item-type').value, id = document.getElementById('adj-item').value, qty = parseFloat(document.getElementById('adj-qty').value), unitType = document.getElementById('adj-unit').value;
             if(!id || isNaN(qty) || qty < 0) return alert('أدخل كمية صحيحة');
@@ -552,36 +546,26 @@
             draftAdj = []; pState.adj = 1; saveDB(); alert('تم حفظ تقرير الجرد بنجاح');
         }
 
-        // --- Wastage Logic ---
         function addWstDraft() {
             const type = document.getElementById('wst-item-type').value, id = document.getElementById('wst-item').value, qty = parseFloat(document.getElementById('wst-qty').value), unitType = document.getElementById('wst-unit').value;
             if(!id || isNaN(qty) || qty <= 0) return alert('أدخل كمية هدر صحيحة أكبر من صفر');
             if(draftWst.find(i => i.itemId === id && i.type === type)) return alert('الصنف مضاف مسبقاً لسلة الهدر');
-            
             const item = type === 'rm' ? db.rawMaterials.find(r=>r.id===id) : db.products.find(p=>p.id===id);
             let wastedBaseQty = (type === 'rm' && unitType === 'PUNIT') ? qty * item.factor : qty;
-            
             if(item.stock < wastedBaseQty) return alert(`الكمية المهدرة أكبر من الرصيد المتوفر! المتبقي فعلياً: ${item.stock.toFixed(2)}`);
-            
             let displayUnit = type === 'rm' ? (unitType === 'PUNIT' ? item.pUnit : item.mUnit) : item.unit;
             const lostValue = wastedBaseQty * item.avgCost;
-
             draftWst.push({ itemId: id, type: type, itemName: item.name, qtyEntered: qty, unitEntered: displayUnit, qtyBase: wastedBaseQty, unitCost: item.avgCost, totalCost: lostValue, tempId: Date.now() });
             document.getElementById('wst-qty').value = ''; renderDrafts();
         }
         function finalizeWastage() {
             if(!draftWst.length) return;
-            draftWst.forEach(i => { 
-                const item = i.type === 'rm' ? db.rawMaterials.find(r=>r.id===i.itemId) : db.products.find(p=>p.id===i.itemId); 
-                item.stock -= i.qtyBase; 
-                if(item.stock === 0) item.avgCost = 0; 
-            });
+            draftWst.forEach(i => { const item = i.type === 'rm' ? db.rawMaterials.find(r=>r.id===i.itemId) : db.products.find(p=>p.id===i.itemId); item.stock -= i.qtyBase; if(item.stock === 0) item.avgCost = 0; });
             const totalLoss = draftWst.reduce((sum, i) => sum + i.totalCost, 0);
             db.wastage.push({ id: 'WST-'+genId(), date: new Date().toLocaleString(), items: [...draftWst], totalCost: totalLoss });
             draftWst = []; pState.wst = 1; saveDB(); alert('تم خصم الهدر من المخزون بنجاح');
         }
 
-        // --- Basics ---
         function addRawMaterial(e) { e.preventDefault(); db.rawMaterials.push({ id: genId(), name: document.getElementById('rm-name').value, pUnit: document.getElementById('rm-punit').value, mUnit: document.getElementById('rm-munit').value, factor: parseFloat(document.getElementById('rm-factor').value), stock: 0, avgCost: 0 }); e.target.reset(); pState.rm = 1; saveDB(); }
         function addRecipeRow(containerId, rmId = '', qty = '') { if(db.rawMaterials.length === 0) return alert('أضف مواد أولية أولاً!'); const row = document.createElement('div'); row.style.display = "flex"; row.style.gap = "10px"; row.style.marginBottom = "10px"; row.innerHTML = `<select class="rec-rm-id" style="flex:2;" required>${db.rawMaterials.map(r => `<option value="${r.id}" ${r.id === rmId ? 'selected' : ''}>${r.name} (${r.mUnit})</option>`).join('')}</select><input type="number" step="0.001" class="rec-rm-qty" style="flex:1;" placeholder="الكمية" value="${qty}" required><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>`; document.getElementById(containerId).appendChild(row); }
         function addProduct(e) { e.preventDefault(); const rows = document.querySelectorAll('#recipe-container > div'); if(rows.length === 0) return alert('أضف مادة واحدة على الأقل!'); db.products.push({ id: genId(), name: document.getElementById('prd-name').value, unit: document.getElementById('prd-unit').value, recipe: Array.from(rows).map(r => ({ rmId: r.querySelector('.rec-rm-id').value, qtyMUnit: parseFloat(r.querySelector('.rec-rm-qty').value) })), stock: 0, avgCost: 0 }); e.target.reset(); document.getElementById('recipe-container').innerHTML = ''; pState.prd = 1; saveDB(); }
@@ -594,7 +578,6 @@
         function openEditPrd(id) { const prd = db.products.find(p => p.id === id); document.getElementById('edit-prd-id').value = prd.id; document.getElementById('edit-prd-name').value = prd.name; document.getElementById('edit-prd-unit').value = prd.unit || 'حبة'; document.getElementById('edit-recipe-container').innerHTML = ''; prd.recipe.forEach(item => addRecipeRow('edit-recipe-container', item.rmId, item.qtyMUnit)); document.getElementById('modal-edit-prd').style.display = 'flex'; }
         function saveEditPrd(e) { e.preventDefault(); const prd = db.products.find(p => p.id === document.getElementById('edit-prd-id').value); const rows = document.querySelectorAll('#edit-recipe-container > div'); if(rows.length === 0) return alert('يجب إضافة مادة!'); prd.name = document.getElementById('edit-prd-name').value; prd.unit = document.getElementById('edit-prd-unit').value; prd.recipe = Array.from(rows).map(row => ({ rmId: row.querySelector('.rec-rm-id').value, qtyMUnit: parseFloat(row.querySelector('.rec-rm-qty').value) })); closeModal('modal-edit-prd'); saveDB(); }
 
-        // --- Trans Drafts ---
         function addPurchaseDraft() { const rmId = document.getElementById('pur-rm').value, qty = parseFloat(document.getElementById('pur-qty').value), cost = parseFloat(document.getElementById('pur-cost').value), unitType = document.getElementById('pur-unit').value; if(!rmId || isNaN(qty) || isNaN(cost) || qty<=0 || cost<=0) return alert('بيانات غير صحيحة'); const rm = db.rawMaterials.find(r => r.id === rmId); const qtyBase = unitType === 'PUNIT' ? (qty * rm.factor) : qty; const displayUnit = unitType === 'PUNIT' ? rm.pUnit : rm.mUnit; draftPur.push({ rmId, rmName: rm.name, qtyEntered: qty, unitEntered: displayUnit, qtyBase: qtyBase, totalCost: cost, tempId: Date.now() }); document.getElementById('pur-qty').value = ''; document.getElementById('pur-cost').value = ''; renderDrafts(); }
         function finalizePurchase() { if(!draftPur.length) return; draftPur.forEach(i => { const rm = db.rawMaterials.find(r => r.id === i.rmId); rm.stock += i.qtyBase; rm.avgCost = ((rm.stock * rm.avgCost) + i.totalCost) / rm.stock || 0; }); db.purchases.push({ id: 'PUR-'+genId(), date: new Date().toLocaleString(), items: [...draftPur], totalCost: draftPur.reduce((s, i) => s + i.totalCost, 0) }); draftPur = []; pState.pur = 1; saveDB(); alert('تم الحفظ!'); }
 
@@ -620,7 +603,6 @@
             const drWst = document.getElementById('wst-draft-container'); drWst.style.display = draftWst.length ? 'block' : 'none'; document.getElementById('table-wst-draft').innerHTML = draftWst.map(i => `<tr><td>${i.itemName}</td><td>${i.type === 'rm' ? 'مادة أولية' : 'منتج جاهز'}</td><td>${i.qtyEntered} ${i.unitEntered}</td><td>${formatMoney(i.totalCost)}</td><td><button class="btn btn-danger btn-sm" onclick="draftWst=draftWst.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join(''); document.getElementById('wst-draft-total').innerText = formatMoney(draftWst.reduce((s, i) => s + i.totalCost, 0));
         }
 
-        // --- Print ---
         function viewTransaction(type, id) {
             let data = null, title = '', th = '', tb = ''; document.getElementById('print-total-label').innerText = 'الإجمالي:';
             if(type === 'PUR') { data = db.purchases.find(x => x.id === id); title = 'فاتورة مشتريات'; th = `<tr><th style="padding:10px; border:1px solid #ddd;">المادة</th><th style="padding:10px; border:1px solid #ddd;">الكمية</th><th style="padding:10px; border:1px solid #ddd;">التكلفة</th></tr>`; tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.rmName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qtyEntered} ${i.unitEntered}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalCost)}</td></tr>`).join(''); document.getElementById('print-total').innerText = formatMoney(data.totalCost); } 
@@ -641,7 +623,7 @@
         function refreshUI() {
             initDropdowns(); renderDrafts();
             renderPaginatedTable(db.rawMaterials, 'table-raw-materials', 'pag-rm', 'rm', r => `<tr><td>${r.name}</td><td>${r.pUnit}</td><td>${r.mUnit}</td><td>${r.factor}</td><td>${formatMoney(r.avgCost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditRM('${r.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deleteRM('${r.id}')">حذف</button></td></tr>`);
-            renderPaginatedTable(db.products, 'table-products', 'pag-prd', 'prd', p => { let cost = p.recipe.reduce((s, i) => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return s+(r?r.avgCost*i.qtyMUnit:0); }, 0); let txt = p.recipe.map(i => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return r ? `${i.qtyMUnit} ${r.mUnit} ${r.name}`:'<span class="text-danger">محذوف</span>'; }).join('<br>'); return `<tr><td>${p.name}</td><td>${p.unit}</td><td>${txt}</td><td>${formatMoney(cost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditPrd('${p.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deletePrd('${p.id}')">حذف</button></td></tr>`; });
+            renderPaginatedTable(db.products, 'table-products', 'pag-prd', 'prd', p => { let cost = p.recipe.reduce((s, i) => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return s+(r?r.avgCost*i.qtyMUnit:0); }, 0); let txt = p.recipe.map(i => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return r ? `${i.qtyMUnit} ${r.mUnit} ${r.name}`:'<span class="text-danger">محذوف</span>'; }).join('<br>'); return `<tr><td>${p.name}</td><td>${p.unit}</td><td>${txt}</td><td>${formatMoney(cost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditPrd('${p.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deletePrd('${p.id}')">حذف</button></td></tr>`);
 
             renderPaginatedTable([...db.purchases].reverse(), 'table-purchases', 'pag-purchases', 'pur', p => `<tr><td>${p.id}</td><td>${p.date}</td><td>${p.items.length}</td><td>${formatMoney(p.totalCost)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('PUR', '${p.id}')">إظهار 👁️</button></td></tr>`);
             renderPaginatedTable([...db.sales].reverse(), 'table-sales', 'pag-sales', 'sal', s => `<tr><td>${s.id}</td><td>${s.date}</td><td>${s.items.length}</td><td>${formatMoney(s.totalSale)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('SAL', '${s.id}')">إظهار 👁️</button></td></tr>`);
