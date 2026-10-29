@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة المصنع - الإصدار الرابع عشر (معدل)</title>
+    <title>نظام إدارة المصنع - الإصدار الخامس عشر (الفروع والمبيعات)</title>
     <style>
         :root {
             --primary: #1a252f; --secondary: #2c3e50; --accent: #2980b9;
@@ -13,14 +13,19 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; height: 100vh; background-color: #f4f6f7; color: var(--dark); overflow: hidden; }
         
+        /* شاشة الدخول */
         #login-screen { position: fixed; inset: 0; background: var(--primary); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 400px; }
         .login-box h2 { color: var(--primary); margin-top: 0; font-size: 1.8rem; }
         .login-box p { color: var(--secondary); margin-bottom: 25px; }
-        .login-box input { width: 100%; font-size: 1.5rem; text-align: center; letter-spacing: 10px; padding: 15px; margin-bottom: 20px; border: 2px solid #ced4da; border-radius: 8px; transition: 0.3s; font-weight: bold; }
+        .login-box input { width: 100%; font-size: 1.5rem; text-align: center; letter-spacing: 8px; padding: 15px; margin-bottom: 20px; border: 2px solid #ced4da; border-radius: 8px; transition: 0.3s; font-weight: bold; }
         .login-box input:focus { border-color: var(--accent); outline: none; }
         
+        /* حاويات النظام */
         #app-container { width: 100%; height: 100%; display: none; }
+        #user-portal { width: 100%; height: 100%; display: none; flex-direction: column; background: #f4f6f7; overflow-y: auto; }
+        .portal-header { background: var(--primary); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .portal-body { max-width: 900px; width: 95%; margin: 30px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 
         #cloud-loader { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5rem; color: var(--primary); font-weight: bold; }
         .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
@@ -28,7 +33,7 @@
 
         .sidebar { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 2px 0 5px rgba(0,0,0,0.1); z-index: 10;}
         .sidebar h2 { text-align: center; padding: 25px 0; margin: 0; background: #141d26; font-size: 1.3rem; letter-spacing: 1px;}
-        .sidebar button { background: none; border: none; color: #bdc3c7; padding: 16px 25px; text-align: right; width: 100%; cursor: pointer; font-size: 1.05rem; transition: 0.3s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar button { background: none; border: none; color: #bdc3c7; padding: 15px 25px; text-align: right; width: 100%; cursor: pointer; font-size: 1.02rem; transition: 0.3s; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .sidebar button:hover, .sidebar button.active { background: var(--accent); color: white; border-right: 4px solid #fff; }
         
         .main-content { flex: 1; padding: 30px; overflow-y: auto; }
@@ -89,6 +94,7 @@
         
         .text-success { color: var(--success); font-weight: bold; }
         .text-danger { color: var(--danger); font-weight: bold; }
+        .badge-branch { background: #e8f4f8; color: var(--accent); padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; display: inline-block; }
         
         @media print {
             body * { visibility: hidden; }
@@ -99,41 +105,91 @@
             .modal-content { box-shadow: none; max-width: 100%; }
         }
 
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--light); padding-bottom: 15px; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid var(--light); padding-bottom: 15px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
 
+    <!-- شاشة تسجيل الدخول الموحدة -->
     <div id="login-screen">
         <div class="login-box">
             <h2>نظام إدارة المصنع</h2>
-            <p>أدخل رمز المرور للوصول إلى النظام</p>
-            <input type="password" id="login-code" placeholder="****" maxlength="4" onkeypress="if(event.key === 'Enter') attemptLogin()">
-            <button class="btn btn-primary" style="width: 100%; font-size: 1.2rem; padding: 12px;" onclick="attemptLogin()">تسجيل الدخول</button>
-            <p id="login-error" style="color: var(--danger); font-weight: bold; display: none; margin-top: 15px;">الرمز غير صحيح!</p>
+            <p>أدخل كود الدخول الخاص بك</p>
+            <input type="password" id="login-code" placeholder="****" onkeypress="if(event.key === 'Enter') attemptLogin()">
+            <button class="btn btn-primary" style="width: 100%; font-size: 1.2rem; padding: 12px;" onclick="attemptLogin()">دخول</button>
+            <p id="login-error" style="color: var(--danger); font-weight: bold; display: none; margin-top: 15px;">الكود غير صحيح!</p>
         </div>
     </div>
 
     <div id="cloud-loader">
         <div class="spinner"></div>
-        جاري مزامنة البيانات من السحابة...
+        جاري مزامنة البيانات مع السحابة...
     </div>
 
+    <!-- واجهة المستخدم (بوابة طلبات الفروع) -->
+    <div id="user-portal" class="no-print">
+        <div class="portal-header">
+            <div>
+                <h2 style="margin:0;">بوابة طلبات الفروع</h2>
+                <span id="portal-welcome" style="color:#bdc3c7; font-size:0.95rem;"></span>
+            </div>
+            <button class="btn btn-danger" onclick="logout()">تسجيل خروج</button>
+        </div>
+        <div class="portal-body">
+            <h3>إنشاء طلب منتجات للفرع</h3>
+            <div class="form-group">
+                <div>
+                    <label>اختر الفرع المستلم</label>
+                    <select id="portal-branch"></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label>المنتج</label>
+                    <select id="portal-prd" onchange="updatePortalUnit()"></select>
+                </div>
+                <div>
+                    <label>الكمية المطلوبة</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" id="portal-qty" placeholder="الكمية">
+                        <div class="unit-label" id="portal-unit-label">وحدة</div>
+                    </div>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary" onclick="addPortalDraft()">+ إضافة للطلب</button>
+                </div>
+            </div>
+
+            <div class="draft-box" id="portal-draft-container" style="display: none;">
+                <h4>المنتجات في الطلب الحالي:</h4>
+                <table>
+                    <thead><tr><th>المنتج</th><th>الكمية المطلوبة</th><th>إجراء</th></tr></thead>
+                    <tbody id="table-portal-draft"></tbody>
+                </table>
+                <br>
+                <button class="btn btn-success" style="width:100%; font-size:1.1rem; padding:12px;" onclick="submitPortalOrder()">🚀 إرسال الطلب واعتماد الفاتورة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- واجهة المدير الكاملة -->
     <div id="app-container">
         <div class="sidebar no-print">
-            <h2>إدارة المصنع V14</h2>
+            <h2>إدارة المصنع V15</h2>
             <button class="nav-btn active" data-target="inventory">أرصدة المخزون</button>
             <button class="nav-btn" data-target="adjustments">تسويات الجرد والهدر</button>
             <button class="nav-btn" data-target="raw-materials">المواد الأولية</button>
             <button class="nav-btn" data-target="products">المنتجات (الوصفات)</button>
             <button class="nav-btn" data-target="purchases">فواتير المشتريات</button>
-            <button class="nav-btn" data-target="sales">فواتير المبيعات</button>
+            <button class="nav-btn" data-target="sales">فواتير المبيعات والأسعار</button>
             <button class="nav-btn" data-target="manufacturing">أوامر التصنيع</button>
+            <button class="nav-btn" data-target="users-branches">إدارة الفروع والمستخدمين</button>
             <button class="nav-btn" onclick="logout()" style="margin-top: auto; background: var(--danger); border-radius: 0;">تسجيل خروج</button>
         </div>
 
         <div class="main-content no-print">
             
+            <!-- أرصدة المخزون -->
             <div id="inventory" class="section active">
                 <h3>أرصدة المخزون الحالية</h3>
                 <div class="summary-cards">
@@ -147,18 +203,17 @@
                 <div id="pag-inv-rm" class="pagination"></div>
                 
                 <h4 class="mt-3">أرصدة المنتجات الجاهزة</h4>
-                <table><thead><tr><th>المنتج</th><th>الكمية المتوفرة</th><th>متوسط التكلفة</th><th>القيمة الإجمالية</th></tr></thead><tbody id="table-inv-prd"></tbody></table>
+                <table><thead><tr><th>المنتج</th><th>الكمية المتوفرة</th><th>متوسط التكلفة</th><th>سعر البيع</th><th>القيمة الإجمالية (بالتكلفة)</th></tr></thead><tbody id="table-inv-prd"></tbody></table>
                 <div id="pag-inv-prd" class="pagination"></div>
             </div>
 
-            <!-- قسم الجرد والهدر المدمج -->
+            <!-- الجرد والهدر -->
             <div id="adjustments" class="section">
                 <div class="tab-buttons">
                     <button class="btn btn-outline active" id="tab-adj-btn" onclick="toggleAdjTab('adj')">تسوية جرد (تحديث الرصيد)</button>
                     <button class="btn btn-outline" id="tab-wst-btn" onclick="toggleAdjTab('wst')">تسجيل هدر وتوالف (خصم من الرصيد)</button>
                 </div>
 
-                <!-- شاشة تسوية الجرد (الرصيد الفعلي) -->
                 <div id="view-adj">
                     <h3>تقرير تسوية جرد فعلي</h3>
                     <div class="form-row">
@@ -185,7 +240,6 @@
                     <div id="pag-adj" class="pagination"></div>
                 </div>
 
-                <!-- شاشة تسجيل الهدر والتوالف -->
                 <div id="view-wst" style="display: none;">
                     <h3 style="color: var(--danger); border-bottom-color: var(--danger);">تقرير تسجيل هدر وتوالف</h3>
                     <div class="form-row" style="border-color: #f5c6cb; background: #f8d7da;">
@@ -213,6 +267,7 @@
                 </div>
             </div>
 
+            <!-- المواد الأولية -->
             <div id="raw-materials" class="section">
                 <h3>تعريف المواد الأولية</h3>
                 <form onsubmit="addRawMaterial(event)">
@@ -231,12 +286,14 @@
                 <div id="pag-rm" class="pagination"></div>
             </div>
 
+            <!-- المنتجات -->
             <div id="products" class="section">
                 <h3>تعريف المنتجات المصنعة (الوصفات)</h3>
                 <form onsubmit="addProduct(event)">
                     <div class="form-group">
                         <div><label>اسم المنتج الجاهز</label><input type="text" id="prd-name" required></div>
                         <div><label>وحدة المنتج</label><select id="prd-unit"></select></div>
+                        <div><label>سعر البيع للوحدة (الافتراضي 1)</label><input type="number" step="0.01" id="prd-price" value="1" required></div>
                     </div>
                     <div class="draft-box">
                         <h4>مكونات التصنيع (للوحدة الواحدة):</h4>
@@ -246,12 +303,13 @@
                     <button type="submit" class="btn btn-primary">حفظ المنتج والوصفة</button>
                 </form>
                 <table class="mt-3">
-                    <thead><tr><th>اسم المنتج</th><th>الوحدة</th><th>المكونات (للوحدة)</th><th>التكلفة التقريبية</th><th style="width: 150px;">إجراءات</th></tr></thead>
+                    <thead><tr><th>اسم المنتج</th><th>الوحدة</th><th>سعر البيع</th><th>المكونات (للوحدة)</th><th>التكلفة التقريبية</th><th style="width: 150px;">إجراءات</th></tr></thead>
                     <tbody id="table-products"></tbody>
                 </table>
                 <div id="pag-prd" class="pagination"></div>
             </div>
 
+            <!-- المشتريات -->
             <div id="purchases" class="section">
                 <h3>إنشاء فاتورة مشتريات</h3>
                 <div class="form-row">
@@ -277,31 +335,51 @@
                 <div id="pag-purchases" class="pagination"></div>
             </div>
 
+            <!-- المبيعات وتسعير المنتجات -->
             <div id="sales" class="section">
-                <h3>إنشاء فاتورة مبيعات</h3>
-                <div class="form-row">
-                    <div><label>المنتج</label><select id="sal-prd" onchange="updateSalUnit()"></select></div>
-                    <div>
-                        <label>الكمية</label>
-                        <div class="input-group">
-                            <input type="number" step="0.01" id="sal-qty">
-                            <div class="unit-label" id="sal-unit-label">وحدة</div>
+                <div class="tab-buttons">
+                    <button class="btn btn-outline active" id="tab-sal-inv-btn" onclick="toggleSalesTab('inv')">فواتير المبيعات وطلبات الفروع</button>
+                    <button class="btn btn-outline" id="tab-sal-prc-btn" onclick="toggleSalesTab('prc')">تحديد وتعديل أسعار بيع المنتجات</button>
+                </div>
+
+                <div id="view-sal-inv">
+                    <h3>إنشاء فاتورة مبيعات مباشرة</h3>
+                    <div class="form-row">
+                        <div><label>الفرع / العميل (اختياري)</label><select id="sal-branch"></select></div>
+                        <div><label>المنتج</label><select id="sal-prd" onchange="updateSalUnit()"></select></div>
+                        <div>
+                            <label>الكمية</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" id="sal-qty" oninput="calcSalTotal()">
+                                <div class="unit-label" id="sal-unit-label">وحدة</div>
+                            </div>
                         </div>
+                        <div><label>سعر البيع الإجمالي</label><input type="number" step="0.01" id="sal-price"></div>
+                        <div><button type="button" class="btn btn-primary" onclick="addSaleDraft()">+ إضافة للفاتورة</button></div>
                     </div>
-                    <div><label>سعر البيع الإجمالي</label><input type="number" step="0.01" id="sal-price"></div>
-                    <div><button type="button" class="btn btn-primary" onclick="addSaleDraft()">+ إضافة للفاتورة</button></div>
+                    <div class="draft-box" id="sal-draft-container" style="display: none;">
+                        <h4>الأصناف في الفاتورة الحالية:</h4>
+                        <table><thead><tr><th>المنتج</th><th>الكمية</th><th>سعر البيع</th><th>إجراء</th></tr></thead><tbody id="table-sal-draft"></tbody></table>
+                        <div class="total-row">إجمالي الفاتورة: <span id="sal-draft-total">0.00</span></div>
+                        <button class="btn btn-success" onclick="finalizeSale()">اعتماد وحفظ الفاتورة</button>
+                    </div>
+                    <h3 class="mt-3">سجل فواتير المبيعات (شامل طلبات الفروع)</h3>
+                    <table><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>الفرع / الموظف</th><th>الأصناف</th><th>الإجمالي</th><th>تفاصيل</th></tr></thead><tbody id="table-sales"></tbody></table>
+                    <div id="pag-sales" class="pagination"></div>
                 </div>
-                <div class="draft-box" id="sal-draft-container" style="display: none;">
-                    <h4>الأصناف في الفاتورة الحالية:</h4>
-                    <table><thead><tr><th>المنتج</th><th>الكمية</th><th>سعر البيع</th><th>إجراء</th></tr></thead><tbody id="table-sal-draft"></tbody></table>
-                    <div class="total-row">إجمالي الفاتورة: <span id="sal-draft-total">0.00</span></div>
-                    <button class="btn btn-success" onclick="finalizeSale()">اعتماد وحفظ الفاتورة</button>
+
+                <!-- شاشة تحديد أسعار البيع داخل تبويب المبيعات -->
+                <div id="view-sal-prc" style="display: none;">
+                    <h3>قائمة أسعار بيع المنتجات</h3>
+                    <p style="color:var(--secondary);">يمكنك تعديل سعر البيع لأي منتج هنا، وسيتم تطبيقه تلقائياً في فواتير المبيعات وطلبات الفروع (السعر الافتراضي لأي منتج جديد هو 1).</p>
+                    <table>
+                        <thead><tr><th>اسم المنتج</th><th>الوحدة</th><th>التكلفة الفعلية الحالية</th><th>سعر البيع للوحدة</th><th>حفظ التعديل</th></tr></thead>
+                        <tbody id="table-sales-pricing"></tbody>
+                    </table>
                 </div>
-                <h3 class="mt-3">سجل المبيعات</h3>
-                <table><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>الأصناف</th><th>الإجمالي</th><th>تفاصيل</th></tr></thead><tbody id="table-sales"></tbody></table>
-                <div id="pag-sales" class="pagination"></div>
             </div>
 
+            <!-- التصنيع -->
             <div id="manufacturing" class="section">
                 <h3>أمر تصنيع (سلة إنتاج)</h3>
                 <div class="form-row">
@@ -325,6 +403,56 @@
                 <table><thead><tr><th>رقم الأمر</th><th>التاريخ</th><th>المنتجات المصنعة</th><th>إجمالي التكلفة</th><th>تفاصيل</th></tr></thead><tbody id="table-mfg-reports"></tbody></table>
                 <div id="pag-mfg" class="pagination"></div>
             </div>
+
+            <!-- إدارة الفروع والمستخدمين -->
+            <div id="users-branches" class="section">
+                <div class="tab-buttons">
+                    <button class="btn btn-outline active" id="tab-ub-branches" onclick="toggleUBTab('branches')">إدارة الفروع</button>
+                    <button class="btn btn-outline" id="tab-ub-users" onclick="toggleUBTab('users')">إدارة المستخدمين (الموظفين)</button>
+                </div>
+
+                <!-- الفروع -->
+                <div id="view-ub-branches">
+                    <h3>إضافة وإدارة الفروع</h3>
+                    <form onsubmit="addBranch(event)" class="form-row">
+                        <div>
+                            <label>اسم الفرع</label>
+                            <input type="text" id="branch-name" placeholder="مثال: فرع العزيزية" required>
+                        </div>
+                        <div style="flex:0;">
+                            <button type="submit" class="btn btn-primary" style="white-space:nowrap;">+ إضافة فرع</button>
+                        </div>
+                    </form>
+                    <table>
+                        <thead><tr><th>اسم الفرع</th><th style="width:150px;">إجراء</th></tr></thead>
+                        <tbody id="table-branches"></tbody>
+                    </table>
+                </div>
+
+                <!-- المستخدمين -->
+                <div id="view-ub-users" style="display: none;">
+                    <h3>إضافة وإدارة المستخدمين</h3>
+                    <p style="color:var(--secondary);">يدخل المستخدم عبر شاشة الدخول باستخدام الكود الخاص به فقط لرفع طلبات الفروع (التعديل متاح ولا يمكن حذف المستخدم حفاظاً على السجلات).</p>
+                    <form onsubmit="addUser(event)" class="form-row">
+                        <div>
+                            <label>اسم المستخدم (الموظف)</label>
+                            <input type="text" id="user-name" placeholder="اسم الموظف" required>
+                        </div>
+                        <div>
+                            <label>كود الدخول الخاص به</label>
+                            <input type="text" id="user-code" placeholder="مثال: 1122" required>
+                        </div>
+                        <div style="flex:0;">
+                            <button type="submit" class="btn btn-primary" style="white-space:nowrap;">+ إضافة مستخدم</button>
+                        </div>
+                    </form>
+                    <table>
+                        <thead><tr><th>اسم المستخدم</th><th>كود الدخول</th><th style="width:150px;">إجراء (تعديل فقط)</th></tr></thead>
+                        <tbody id="table-users"></tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -335,6 +463,7 @@
                 <div style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px;">
                     <h2 id="print-title" style="margin: 0; color: var(--primary);">فاتورة</h2>
                     <p style="margin: 5px 0 0 0; color: #555;">رقم: <span id="print-id"></span> | التاريخ: <span id="print-date" dir="ltr"></span></p>
+                    <p id="print-meta" style="margin: 5px 0 0 0; color: var(--accent); font-weight: bold;"></p>
                 </div>
                 <table style="width: 100%; text-align: right; border-collapse: collapse;">
                     <thead id="print-th" style="background: #f8f9fa;"></thead>
@@ -369,12 +498,13 @@
 
     <div id="modal-edit-prd" class="modal no-print">
         <div class="modal-content">
-            <div class="modal-header"><h3>تعديل المنتج (الوصفة)</h3><button class="btn btn-danger btn-sm" onclick="closeModal('modal-edit-prd')">إغلاق</button></div>
+            <div class="modal-header"><h3>تعديل المنتج (الوصفة والسعر)</h3><button class="btn btn-danger btn-sm" onclick="closeModal('modal-edit-prd')">إغلاق</button></div>
             <form onsubmit="saveEditPrd(event)">
                 <input type="hidden" id="edit-prd-id">
                 <div class="form-group">
                     <div><label>اسم المنتج</label><input type="text" id="edit-prd-name" required></div>
                     <div><label>وحدة المنتج</label><select id="edit-prd-unit"></select></div>
+                    <div><label>سعر البيع للوحدة</label><input type="number" step="0.01" id="edit-prd-price" required></div>
                 </div>
                 <div class="draft-box">
                     <h4>المكونات (للوحدة الواحدة):</h4>
@@ -386,37 +516,45 @@
         </div>
     </div>
 
+    <!-- تعديل مستخدم -->
+    <div id="modal-edit-user" class="modal no-print">
+        <div class="modal-content" style="max-width:450px;">
+            <div class="modal-header"><h3>تعديل بيانات المستخدم</h3><button class="btn btn-danger btn-sm" onclick="closeModal('modal-edit-user')">إغلاق</button></div>
+            <form onsubmit="saveEditUser(event)">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group">
+                    <div><label>اسم المستخدم</label><input type="text" id="edit-user-name" required></div>
+                    <div><label>كود الدخول</label><input type="text" id="edit-user-code" required></div>
+                </div>
+                <button type="submit" class="btn btn-success" style="width:100%;">حفظ التعديلات</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- تعديل فرع -->
+    <div id="modal-edit-branch" class="modal no-print">
+        <div class="modal-content" style="max-width:450px;">
+            <div class="modal-header"><h3>تعديل اسم الفرع</h3><button class="btn btn-danger btn-sm" onclick="closeModal('modal-edit-branch')">إغلاق</button></div>
+            <form onsubmit="saveEditBranch(event)">
+                <input type="hidden" id="edit-branch-id">
+                <div class="form-group">
+                    <div><label>اسم الفرع</label><input type="text" id="edit-branch-name" required></div>
+                </div>
+                <button type="submit" class="btn btn-success" style="width:100%;">حفظ التعديلات</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         const FIREBASE_URL = 'https://factory-917b1-default-rtdb.europe-west1.firebasedatabase.app/factoryDB.json';
         const defaultUnits = ['KG', 'g', 'L', 'ml', 'كرتون', 'سبت', 'حبة', 'ربطة', 'قطعة', 'كيس', 'خيشة', 'علبة', 'تنكة'];
+        const ADMIN_CODE = '5856';
         
-        let db = { rawMaterials: [], products: [], purchases: [], sales: [], manufacturing: [], adjustments: [], wastage: [] };
+        let db = { rawMaterials: [], products: [], purchases: [], sales: [], manufacturing: [], adjustments: [], wastage: [], branches: [], users: [] };
         const ITEMS_PER_PAGE = 10;
         let pState = { rm: 1, prd: 1, pur: 1, sal: 1, mfg: 1, invRm: 1, invPrd: 1, adj: 1, wst: 1 };
-        let draftPur = [], draftSal = [], draftMfg = [], draftAdj = [], draftWst = [];
-
-        function attemptLogin() {
-            const code = document.getElementById('login-code').value;
-            if(code === '5856') {
-                sessionStorage.setItem('factoryAuth_V14', 'true');
-                grantAccess();
-            } else {
-                document.getElementById('login-error').style.display = 'block';
-                document.getElementById('login-code').value = '';
-                document.getElementById('login-code').focus();
-            }
-        }
-
-        function grantAccess() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-container').style.display = 'flex';
-            fetchDB();
-        }
-
-        function logout() {
-            sessionStorage.removeItem('factoryAuth_V14');
-            location.reload();
-        }
+        let draftPur = [], draftSal = [], draftMfg = [], draftAdj = [], draftWst = [], draftPortal = [];
+        let currentSession = null; // { role: 'admin' | 'user', user: {...} }
 
         async function fetchDB() {
             document.getElementById('cloud-loader').style.display = 'flex';
@@ -431,7 +569,12 @@
                     db.manufacturing = data.manufacturing || [];
                     db.adjustments = data.adjustments || [];
                     db.wastage = data.wastage || [];
-                    db.products.forEach(p => { if(!p.unit) p.unit = 'حبة'; });
+                    db.branches = data.branches || [];
+                    db.users = data.users || [];
+                    db.products.forEach(p => { 
+                        if(!p.unit) p.unit = 'حبة'; 
+                        if(p.sellPrice === undefined || p.sellPrice === null || isNaN(p.sellPrice)) p.sellPrice = 1;
+                    });
                 }
             } catch (err) {
                 console.error("Firebase load error:", err);
@@ -454,9 +597,60 @@
             }
         }
 
-        window.onload = () => {
-            if(sessionStorage.getItem('factoryAuth_V14') === 'true') grantAccess();
-            else document.getElementById('login-code').focus();
+        // --- نظام الدخول للادمن والموظفين ---
+        async function attemptLogin() {
+            const code = document.getElementById('login-code').value.trim();
+            if(!code) return;
+
+            document.getElementById('login-error').style.display = 'none';
+            await fetchDB(); // جلب أحدث بيانات المستخدمين قبل التحقق
+
+            if(code === ADMIN_CODE) {
+                currentSession = { role: 'admin', name: 'المدير العام' };
+                sessionStorage.setItem('factorySession_V15', JSON.stringify(currentSession));
+                grantAccess();
+                return;
+            }
+
+            const matchedUser = db.users.find(u => String(u.code).trim() === code);
+            if(matchedUser) {
+                currentSession = { role: 'user', id: matchedUser.id, name: matchedUser.name };
+                sessionStorage.setItem('factorySession_V15', JSON.stringify(currentSession));
+                grantAccess();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+                document.getElementById('login-code').value = '';
+                document.getElementById('login-code').focus();
+            }
+        }
+
+        function grantAccess() {
+            document.getElementById('login-screen').style.display = 'none';
+            if(currentSession.role === 'admin') {
+                document.getElementById('user-portal').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+            } else {
+                document.getElementById('app-container').style.display = 'none';
+                document.getElementById('user-portal').style.display = 'flex';
+                document.getElementById('portal-welcome').innerText = `مرحباً بك: ${currentSession.name}`;
+            }
+            refreshUI();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('factorySession_V15');
+            location.reload();
+        }
+
+        window.onload = async () => {
+            const saved = sessionStorage.getItem('factorySession_V15');
+            if(saved) {
+                currentSession = JSON.parse(saved);
+                await fetchDB();
+                grantAccess();
+            } else {
+                document.getElementById('login-code').focus();
+            }
         };
 
         const genId = () => Math.random().toString(36).substr(2, 6).toUpperCase();
@@ -472,18 +666,24 @@
         });
 
         function toggleAdjTab(tab) {
-            document.getElementById('tab-adj-btn').classList.remove('active');
-            document.getElementById('tab-wst-btn').classList.remove('active');
-            document.getElementById('view-adj').style.display = 'none';
-            document.getElementById('view-wst').style.display = 'none';
+            document.getElementById('tab-adj-btn').classList.toggle('active', tab === 'adj');
+            document.getElementById('tab-wst-btn').classList.toggle('active', tab === 'wst');
+            document.getElementById('view-adj').style.display = tab === 'adj' ? 'block' : 'none';
+            document.getElementById('view-wst').style.display = tab === 'wst' ? 'block' : 'none';
+        }
 
-            if(tab === 'adj') {
-                document.getElementById('tab-adj-btn').classList.add('active');
-                document.getElementById('view-adj').style.display = 'block';
-            } else {
-                document.getElementById('tab-wst-btn').classList.add('active');
-                document.getElementById('view-wst').style.display = 'block';
-            }
+        function toggleSalesTab(tab) {
+            document.getElementById('tab-sal-inv-btn').classList.toggle('active', tab === 'inv');
+            document.getElementById('tab-sal-prc-btn').classList.toggle('active', tab === 'prc');
+            document.getElementById('view-sal-inv').style.display = tab === 'inv' ? 'block' : 'none';
+            document.getElementById('view-sal-prc').style.display = tab === 'prc' ? 'block' : 'none';
+        }
+
+        function toggleUBTab(tab) {
+            document.getElementById('tab-ub-branches').classList.toggle('active', tab === 'branches');
+            document.getElementById('tab-ub-users').classList.toggle('active', tab === 'users');
+            document.getElementById('view-ub-branches').style.display = tab === 'branches' ? 'block' : 'none';
+            document.getElementById('view-ub-users').style.display = tab === 'users' ? 'block' : 'none';
         }
 
         function initDropdowns() {
@@ -493,10 +693,16 @@
             document.getElementById('prd-unit').innerHTML = unitOpts; document.getElementById('edit-prd-unit').innerHTML = unitOpts;
             
             document.getElementById('pur-rm').innerHTML = db.rawMaterials.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            const prdOpts = db.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            document.getElementById('sal-prd').innerHTML = prdOpts; document.getElementById('mfg-prd').innerHTML = prdOpts;
+            const prdOpts = db.products.map(p => `<option value="${p.id}">${p.name} (متوفر: ${p.stock.toFixed(2)} ${p.unit})</option>`).join('');
+            document.getElementById('sal-prd').innerHTML = prdOpts; 
+            document.getElementById('mfg-prd').innerHTML = prdOpts;
+            document.getElementById('portal-prd').innerHTML = prdOpts;
+
+            const branchOpts = db.branches.map(b => `<option value="${b.name}">${b.name}</option>`).join('');
+            document.getElementById('portal-branch').innerHTML = branchOpts || '<option value="">-- لا توجد فروع مضافة --</option>';
+            document.getElementById('sal-branch').innerHTML = `<option value="مبيعات مباشرة">مبيعات مباشرة</option>` + branchOpts;
             
-            updatePurUnit(); updateSalUnit(); updateMfgUnit(); updateAdjItemSelect(); updateWstItemSelect();
+            updatePurUnit(); updateSalUnit(); updateMfgUnit(); updateAdjItemSelect(); updateWstItemSelect(); updatePortalUnit();
         }
 
         function updatePurUnit() {
@@ -505,9 +711,125 @@
             if(rm) select.innerHTML = `<option value="PUNIT">${rm.pUnit} (شراء)</option><option value="MUNIT">${rm.mUnit} (تصنيع)</option>`;
             else select.innerHTML = '';
         }
-        function updateSalUnit() { const prd = db.products.find(p => p.id === document.getElementById('sal-prd').value); if(prd) document.getElementById('sal-unit-label').innerText = prd.unit; }
+        function updateSalUnit() { 
+            const prd = db.products.find(p => p.id === document.getElementById('sal-prd').value); 
+            if(prd) {
+                document.getElementById('sal-unit-label').innerText = prd.unit;
+                calcSalTotal();
+            }
+        }
+        function calcSalTotal() {
+            const prd = db.products.find(p => p.id === document.getElementById('sal-prd').value);
+            const qty = parseFloat(document.getElementById('sal-qty').value);
+            if(prd && !isNaN(qty) && qty > 0) {
+                document.getElementById('sal-price').value = (qty * (prd.sellPrice || 1)).toFixed(2);
+            }
+        }
         function updateMfgUnit() { const prd = db.products.find(p => p.id === document.getElementById('mfg-prd').value); if(prd) document.getElementById('mfg-unit-label').innerText = prd.unit; }
+        function updatePortalUnit() { const prd = db.products.find(p => p.id === document.getElementById('portal-prd').value); if(prd) document.getElementById('portal-unit-label').innerText = prd.unit; }
 
+        // --- إدارة الفروع والمستخدمين ---
+        function addBranch(e) {
+            e.preventDefault();
+            const name = document.getElementById('branch-name').value.trim();
+            if(!name) return;
+            db.branches.push({ id: genId(), name });
+            e.target.reset(); saveDB();
+        }
+        function openEditBranch(id) {
+            const b = db.branches.find(x => x.id === id);
+            document.getElementById('edit-branch-id').value = b.id;
+            document.getElementById('edit-branch-name').value = b.name;
+            document.getElementById('modal-edit-branch').style.display = 'flex';
+        }
+        function saveEditBranch(e) {
+            e.preventDefault();
+            const b = db.branches.find(x => x.id === document.getElementById('edit-branch-id').value);
+            b.name = document.getElementById('edit-branch-name').value.trim();
+            closeModal('modal-edit-branch'); saveDB();
+        }
+
+        function addUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('user-name').value.trim();
+            const code = document.getElementById('user-code').value.trim();
+            if(code === ADMIN_CODE || db.users.some(u => String(u.code).trim() === code)) {
+                return alert('هذا الكود مستخدم مسبقاً، اختر كود آخر!');
+            }
+            db.users.push({ id: genId(), name, code });
+            e.target.reset(); saveDB();
+        }
+        function openEditUser(id) {
+            const u = db.users.find(x => x.id === id);
+            document.getElementById('edit-user-id').value = u.id;
+            document.getElementById('edit-user-name').value = u.name;
+            document.getElementById('edit-user-code').value = u.code;
+            document.getElementById('modal-edit-user').style.display = 'flex';
+        }
+        function saveEditUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-user-id').value;
+            const name = document.getElementById('edit-user-name').value.trim();
+            const code = document.getElementById('edit-user-code').value.trim();
+            if(code === ADMIN_CODE || db.users.some(u => u.id !== id && String(u.code).trim() === code)) {
+                return alert('هذا الكود مستخدم مسبقاً، اختر كود آخر!');
+            }
+            const u = db.users.find(x => x.id === id);
+            u.name = name; u.code = code;
+            closeModal('modal-edit-user'); saveDB();
+        }
+
+        // --- بوابة طلبات الفروع (للموظفين) ---
+        function addPortalDraft() {
+            const prdId = document.getElementById('portal-prd').value;
+            const qty = parseFloat(document.getElementById('portal-qty').value);
+            if(!prdId || isNaN(qty) || qty <= 0) return alert('أدخل كمية صحيحة');
+            const prd = db.products.find(p => p.id === prdId);
+            const draftQty = draftPortal.filter(i => i.prdId === prdId).reduce((s, i) => s + i.qty, 0);
+            if(prd.stock < (draftQty + qty)) return alert(`المخزون المتوفر في المصنع لا يكفي! المتوفر: ${prd.stock.toFixed(2)} ${prd.unit}`);
+            
+            const unitPrice = prd.sellPrice || 1;
+            draftPortal.push({ prdId, prdName: prd.name, unit: prd.unit, qty, unitPrice, totalSale: qty * unitPrice, tempId: Date.now() });
+            document.getElementById('portal-qty').value = '';
+            renderDrafts();
+        }
+
+        async function submitPortalOrder() {
+            const branchName = document.getElementById('portal-branch').value;
+            if(!branchName) return alert('الرجاء اختيار الفرع أولاً!');
+            if(!draftPortal.length) return;
+
+            draftPortal.forEach(i => {
+                const prd = db.products.find(p => p.id === i.prdId);
+                if(prd) prd.stock -= i.qty;
+            });
+
+            const totalOrderSale = draftPortal.reduce((s, i) => s + i.totalSale, 0);
+            db.sales.push({
+                id: 'SAL-' + genId(),
+                date: new Date().toLocaleString(),
+                branchName: branchName,
+                userName: currentSession.name,
+                items: [...draftPortal],
+                totalSale: totalOrderSale
+            });
+
+            draftPortal = [];
+            await saveDB();
+            alert('✅ تم إرسال الطلب بنجاح وتسجيله في فواتير المبيعات!');
+        }
+
+        // --- تحديث سعر البيع من تبويب المبيعات ---
+        function updateProductSellPrice(id) {
+            const val = parseFloat(document.getElementById('price-input-' + id).value);
+            if(isNaN(val) || val <= 0) return alert('أدخل سعراً صحيحاً أكبر من صفر');
+            const prd = db.products.find(p => p.id === id);
+            prd.sellPrice = val;
+            saveDB();
+            alert(`تم تحديث سعر بيع (${prd.name}) إلى ${formatMoney(val)}`);
+        }
+
+        // --- الجرد والهدر ---
         function updateAdjItemSelect() {
             const type = document.getElementById('adj-item-type').value; const sel = document.getElementById('adj-item');
             sel.innerHTML = type === 'rm' ? db.rawMaterials.map(r => `<option value="${r.id}">${r.name}</option>`).join('') : db.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
@@ -569,23 +891,43 @@
             draftWst = []; pState.wst = 1; saveDB(); alert('تم خصم الهدر من المخزون بنجاح');
         }
 
+        // --- المواد والمنتجات ---
         function addRawMaterial(e) { e.preventDefault(); db.rawMaterials.push({ id: genId(), name: document.getElementById('rm-name').value, pUnit: document.getElementById('rm-punit').value, mUnit: document.getElementById('rm-munit').value, factor: parseFloat(document.getElementById('rm-factor').value), stock: 0, avgCost: 0 }); e.target.reset(); pState.rm = 1; saveDB(); }
         function addRecipeRow(containerId, rmId = '', qty = '') { if(db.rawMaterials.length === 0) return alert('أضف مواد أولية أولاً!'); const row = document.createElement('div'); row.style.display = "flex"; row.style.gap = "10px"; row.style.marginBottom = "10px"; row.innerHTML = `<select class="rec-rm-id" style="flex:2;" required>${db.rawMaterials.map(r => `<option value="${r.id}" ${r.id === rmId ? 'selected' : ''}>${r.name} (${r.mUnit})</option>`).join('')}</select><input type="number" step="0.001" class="rec-rm-qty" style="flex:1;" placeholder="الكمية" value="${qty}" required><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>`; document.getElementById(containerId).appendChild(row); }
-        function addProduct(e) { e.preventDefault(); const rows = document.querySelectorAll('#recipe-container > div'); if(rows.length === 0) return alert('أضف مادة واحدة على الأقل!'); db.products.push({ id: genId(), name: document.getElementById('prd-name').value, unit: document.getElementById('prd-unit').value, recipe: Array.from(rows).map(r => ({ rmId: r.querySelector('.rec-rm-id').value, qtyMUnit: parseFloat(r.querySelector('.rec-rm-qty').value) })), stock: 0, avgCost: 0 }); e.target.reset(); document.getElementById('recipe-container').innerHTML = ''; pState.prd = 1; saveDB(); }
+        
+        function addProduct(e) { 
+            e.preventDefault(); 
+            const rows = document.querySelectorAll('#recipe-container > div'); 
+            if(rows.length === 0) return alert('أضف مادة واحدة على الأقل!'); 
+            const sellPrice = parseFloat(document.getElementById('prd-price').value) || 1;
+            db.products.push({ 
+                id: genId(), 
+                name: document.getElementById('prd-name').value, 
+                unit: document.getElementById('prd-unit').value, 
+                sellPrice: sellPrice,
+                recipe: Array.from(rows).map(r => ({ rmId: r.querySelector('.rec-rm-id').value, qtyMUnit: parseFloat(r.querySelector('.rec-rm-qty').value) })), 
+                stock: 0, avgCost: 0 
+            }); 
+            e.target.reset(); 
+            document.getElementById('prd-price').value = 1;
+            document.getElementById('recipe-container').innerHTML = ''; 
+            pState.prd = 1; saveDB(); 
+        }
         
         function deleteRM(id) { if(db.rawMaterials.find(r => r.id === id).stock !== 0) return alert('الرصيد ليس صفراً.'); if(confirm('حذف؟')) { db.rawMaterials = db.rawMaterials.filter(r => r.id !== id); saveDB(); } }
         function openEditRM(id) { const rm = db.rawMaterials.find(r => r.id === id); document.getElementById('edit-rm-id').value = rm.id; document.getElementById('edit-rm-name').value = rm.name; document.getElementById('edit-rm-punit').value = rm.pUnit; document.getElementById('edit-rm-munit').value = rm.mUnit; document.getElementById('edit-rm-factor').value = rm.factor; document.getElementById('modal-edit-rm').style.display = 'flex'; }
         function saveEditRM(e) { e.preventDefault(); const rm = db.rawMaterials.find(r => r.id === document.getElementById('edit-rm-id').value); rm.name = document.getElementById('edit-rm-name').value; rm.pUnit = document.getElementById('edit-rm-punit').value; rm.mUnit = document.getElementById('edit-rm-munit').value; rm.factor = parseFloat(document.getElementById('edit-rm-factor').value); closeModal('modal-edit-rm'); saveDB(); }
         
         function deletePrd(id) { if(db.products.find(p => p.id === id).stock !== 0) return alert('الرصيد ليس صفراً.'); if(confirm('حذف؟')) { db.products = db.products.filter(p => p.id !== id); saveDB(); } }
-        function openEditPrd(id) { const prd = db.products.find(p => p.id === id); document.getElementById('edit-prd-id').value = prd.id; document.getElementById('edit-prd-name').value = prd.name; document.getElementById('edit-prd-unit').value = prd.unit || 'حبة'; document.getElementById('edit-recipe-container').innerHTML = ''; prd.recipe.forEach(item => addRecipeRow('edit-recipe-container', item.rmId, item.qtyMUnit)); document.getElementById('modal-edit-prd').style.display = 'flex'; }
-        function saveEditPrd(e) { e.preventDefault(); const prd = db.products.find(p => p.id === document.getElementById('edit-prd-id').value); const rows = document.querySelectorAll('#edit-recipe-container > div'); if(rows.length === 0) return alert('يجب إضافة مادة!'); prd.name = document.getElementById('edit-prd-name').value; prd.unit = document.getElementById('edit-prd-unit').value; prd.recipe = Array.from(rows).map(row => ({ rmId: row.querySelector('.rec-rm-id').value, qtyMUnit: parseFloat(row.querySelector('.rec-rm-qty').value) })); closeModal('modal-edit-prd'); saveDB(); }
+        function openEditPrd(id) { const prd = db.products.find(p => p.id === id); document.getElementById('edit-prd-id').value = prd.id; document.getElementById('edit-prd-name').value = prd.name; document.getElementById('edit-prd-unit').value = prd.unit || 'حبة'; document.getElementById('edit-prd-price').value = prd.sellPrice || 1; document.getElementById('edit-recipe-container').innerHTML = ''; prd.recipe.forEach(item => addRecipeRow('edit-recipe-container', item.rmId, item.qtyMUnit)); document.getElementById('modal-edit-prd').style.display = 'flex'; }
+        function saveEditPrd(e) { e.preventDefault(); const prd = db.products.find(p => p.id === document.getElementById('edit-prd-id').value); const rows = document.querySelectorAll('#edit-recipe-container > div'); if(rows.length === 0) return alert('يجب إضافة مادة!'); prd.name = document.getElementById('edit-prd-name').value; prd.unit = document.getElementById('edit-prd-unit').value; prd.sellPrice = parseFloat(document.getElementById('edit-prd-price').value) || 1; prd.recipe = Array.from(rows).map(row => ({ rmId: row.querySelector('.rec-rm-id').value, qtyMUnit: parseFloat(row.querySelector('.rec-rm-qty').value) })); closeModal('modal-edit-prd'); saveDB(); }
 
+        // --- الفواتير والتصنيع ---
         function addPurchaseDraft() { const rmId = document.getElementById('pur-rm').value, qty = parseFloat(document.getElementById('pur-qty').value), cost = parseFloat(document.getElementById('pur-cost').value), unitType = document.getElementById('pur-unit').value; if(!rmId || isNaN(qty) || isNaN(cost) || qty<=0 || cost<=0) return alert('بيانات غير صحيحة'); const rm = db.rawMaterials.find(r => r.id === rmId); const qtyBase = unitType === 'PUNIT' ? (qty * rm.factor) : qty; const displayUnit = unitType === 'PUNIT' ? rm.pUnit : rm.mUnit; draftPur.push({ rmId, rmName: rm.name, qtyEntered: qty, unitEntered: displayUnit, qtyBase: qtyBase, totalCost: cost, tempId: Date.now() }); document.getElementById('pur-qty').value = ''; document.getElementById('pur-cost').value = ''; renderDrafts(); }
         function finalizePurchase() { if(!draftPur.length) return; draftPur.forEach(i => { const rm = db.rawMaterials.find(r => r.id === i.rmId); rm.stock += i.qtyBase; rm.avgCost = ((rm.stock * rm.avgCost) + i.totalCost) / rm.stock || 0; }); db.purchases.push({ id: 'PUR-'+genId(), date: new Date().toLocaleString(), items: [...draftPur], totalCost: draftPur.reduce((s, i) => s + i.totalCost, 0) }); draftPur = []; pState.pur = 1; saveDB(); alert('تم الحفظ!'); }
 
         function addSaleDraft() { const prdId = document.getElementById('sal-prd').value, qty = parseFloat(document.getElementById('sal-qty').value), price = parseFloat(document.getElementById('sal-price').value); if(!prdId || isNaN(qty) || isNaN(price) || qty<=0 || price<=0) return alert('بيانات غير صحيحة'); const prd = db.products.find(p => p.id === prdId); if(prd.stock < (draftSal.filter(i => i.prdId === prdId).reduce((s, i) => s + i.qty, 0) + qty)) return alert('المخزون لا يكفي!'); draftSal.push({ prdId, prdName: prd.name, unit: prd.unit, qty, totalSale: price, tempId: Date.now() }); document.getElementById('sal-qty').value = ''; document.getElementById('sal-price').value = ''; renderDrafts(); }
-        function finalizeSale() { if(!draftSal.length) return; draftSal.forEach(i => { db.products.find(p => p.id === i.prdId).stock -= i.qty; }); db.sales.push({ id: 'SAL-'+genId(), date: new Date().toLocaleString(), items: [...draftSal], totalSale: draftSal.reduce((s, i) => s + i.totalSale, 0) }); draftSal = []; pState.sal = 1; saveDB(); alert('تم الحفظ!'); }
+        function finalizeSale() { if(!draftSal.length) return; const branchName = document.getElementById('sal-branch').value || 'مبيعات مباشرة'; draftSal.forEach(i => { db.products.find(p => p.id === i.prdId).stock -= i.qty; }); db.sales.push({ id: 'SAL-'+genId(), date: new Date().toLocaleString(), branchName: branchName, userName: 'المدير', items: [...draftSal], totalSale: draftSal.reduce((s, i) => s + i.totalSale, 0) }); draftSal = []; pState.sal = 1; saveDB(); alert('تم الحفظ!'); }
 
         function addMfgDraft() { const prdId = document.getElementById('mfg-prd').value, qty = parseFloat(document.getElementById('mfg-qty').value); if(!prdId || isNaN(qty) || qty<=0) return alert('بيانات غير صحيحة'); const prd = db.products.find(p => p.id === prdId); draftMfg.push({ prdId, prdName: prd.name, unit: prd.unit, qty, tempId: Date.now() }); document.getElementById('mfg-qty').value = ''; renderDrafts(); }
         function finalizeMfg() {
@@ -604,12 +946,27 @@
             const drMfg = document.getElementById('mfg-draft-container'); drMfg.style.display = draftMfg.length ? 'block' : 'none'; document.getElementById('table-mfg-draft').innerHTML = draftMfg.map(i => `<tr><td>${i.prdName}</td><td>${i.qty} ${i.unit}</td><td><button class="btn btn-danger btn-sm" onclick="draftMfg=draftMfg.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join('');
             const drAdj = document.getElementById('adj-draft-container'); drAdj.style.display = draftAdj.length ? 'block' : 'none'; document.getElementById('table-adj-draft').innerHTML = draftAdj.map(i => `<tr><td>${i.itemName}</td><td>${i.type === 'rm' ? 'مادة أولية' : 'منتج جاهز'}</td><td>${i.qtyEntered} ${i.unitEntered}</td><td><button class="btn btn-danger btn-sm" onclick="draftAdj=draftAdj.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join('');
             const drWst = document.getElementById('wst-draft-container'); drWst.style.display = draftWst.length ? 'block' : 'none'; document.getElementById('table-wst-draft').innerHTML = draftWst.map(i => `<tr><td>${i.itemName}</td><td>${i.type === 'rm' ? 'مادة أولية' : 'منتج جاهز'}</td><td>${i.qtyEntered} ${i.unitEntered}</td><td>${formatMoney(i.totalCost)}</td><td><button class="btn btn-danger btn-sm" onclick="draftWst=draftWst.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join(''); document.getElementById('wst-draft-total').innerText = formatMoney(draftWst.reduce((s, i) => s + i.totalCost, 0));
+            
+            const drPortal = document.getElementById('portal-draft-container'); 
+            if(drPortal) {
+                drPortal.style.display = draftPortal.length ? 'block' : 'none';
+                document.getElementById('table-portal-draft').innerHTML = draftPortal.map(i => `<tr><td>${i.prdName}</td><td>${i.qty} ${i.unit}</td><td><button class="btn btn-danger btn-sm" onclick="draftPortal=draftPortal.filter(x=>x.tempId!==${i.tempId});renderDrafts()">حذف</button></td></tr>`).join('');
+            }
         }
 
         function viewTransaction(type, id) {
-            let data = null, title = '', th = '', tb = ''; document.getElementById('print-total-label').innerText = 'الإجمالي:';
+            let data = null, title = '', th = '', tb = ''; 
+            document.getElementById('print-total-label').innerText = 'الإجمالي:';
+            document.getElementById('print-meta').innerText = '';
+
             if(type === 'PUR') { data = db.purchases.find(x => x.id === id); title = 'فاتورة مشتريات'; th = `<tr><th style="padding:10px; border:1px solid #ddd;">المادة</th><th style="padding:10px; border:1px solid #ddd;">الكمية</th><th style="padding:10px; border:1px solid #ddd;">التكلفة</th></tr>`; tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.rmName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qtyEntered} ${i.unitEntered}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalCost)}</td></tr>`).join(''); document.getElementById('print-total').innerText = formatMoney(data.totalCost); } 
-            else if(type === 'SAL') { data = db.sales.find(x => x.id === id); title = 'فاتورة مبيعات'; th = `<tr><th style="padding:10px; border:1px solid #ddd;">المنتج</th><th style="padding:10px; border:1px solid #ddd;">الكمية</th><th style="padding:10px; border:1px solid #ddd;">السعر</th></tr>`; tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.prdName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qty} ${i.unit}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalSale)}</td></tr>`).join(''); document.getElementById('print-total').innerText = formatMoney(data.totalSale); } 
+            else if(type === 'SAL') { 
+                data = db.sales.find(x => x.id === id); title = 'فاتورة مبيعات / طلب فرع'; 
+                if(data.branchName) document.getElementById('print-meta').innerText = `الفرع: ${data.branchName} | بواسطة: ${data.userName || '-'}`;
+                th = `<tr><th style="padding:10px; border:1px solid #ddd;">المنتج</th><th style="padding:10px; border:1px solid #ddd;">الكمية</th><th style="padding:10px; border:1px solid #ddd;">السعر الإجمالي</th></tr>`; 
+                tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.prdName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qty} ${i.unit}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalSale)}</td></tr>`).join(''); 
+                document.getElementById('print-total').innerText = formatMoney(data.totalSale); 
+            } 
             else if(type === 'MFG') { data = db.manufacturing.find(x => x.id === id); title = 'أمر تصنيع (إنتاج)'; th = `<tr><th style="padding:10px; border:1px solid #ddd;">المنتج</th><th style="padding:10px; border:1px solid #ddd;">الكمية المنتجة</th><th style="padding:10px; border:1px solid #ddd;">المواد المستهلكة</th><th style="padding:10px; border:1px solid #ddd;">تكلفة الوحدة</th><th style="padding:10px; border:1px solid #ddd;">التكلفة الإجمالية</th></tr>`; tb = data.items.map(i => { let uCost = i.qty > 0 ? (i.totalCost / i.qty) : 0; return `<tr><td style="padding:10px; border:1px solid #ddd;">${i.prdName}</td><td style="padding:10px; border:1px solid #ddd;">${i.qty} ${i.unit}</td><td style="padding:10px; border:1px solid #ddd; font-size:0.85rem;">${i.consumedText}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(uCost)}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.totalCost)}</td></tr>`; }).join(''); document.getElementById('print-total').innerText = formatMoney(data.totalCost); } 
             else if(type === 'ADJ') { data = db.adjustments.find(x => x.id === id); title = 'تقرير تسوية جرد'; document.getElementById('print-total-label').innerText = 'الأثر المالي الإجمالي:'; th = `<tr><th style="padding:10px; border:1px solid #ddd;">الصنف</th><th style="padding:10px; border:1px solid #ddd;">الرصيد الدفتري</th><th style="padding:10px; border:1px solid #ddd;">الرصيد الفعلي</th><th style="padding:10px; border:1px solid #ddd;">الفرق</th><th style="padding:10px; border:1px solid #ddd;">الأثر المالي</th></tr>`; if(data.items) { tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.itemName}</td><td style="padding:10px; border:1px solid #ddd;">${i.oldStock.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd;">${i.qtyEntered} ${i.unitEntered}</td><td style="padding:10px; border:1px solid #ddd;" dir="ltr">${i.diffQty > 0 ? '+'+i.diffQty.toFixed(2) : i.diffQty.toFixed(2)}</td><td style="padding:10px; border:1px solid #ddd; color:${i.diffValue>0?'var(--success)':'var(--danger)'};" dir="ltr">${formatMoney(i.diffValue)}</td></tr>`).join(''); } document.getElementById('print-total').innerText = formatMoney(data.totalValue); document.getElementById('print-total').style.color = data.totalValue > 0 ? 'var(--success)' : 'var(--danger)'; }
             else if(type === 'WST') { data = db.wastage.find(x => x.id === id); title = 'تقرير هدر وتوالف'; document.getElementById('print-total-label').innerText = 'إجمالي تكلفة الهدر:'; th = `<tr><th style="padding:10px; border:1px solid #ddd;">الصنف</th><th style="padding:10px; border:1px solid #ddd;">النوع</th><th style="padding:10px; border:1px solid #ddd;">الكمية المهدرة</th><th style="padding:10px; border:1px solid #ddd;">تكلفة الوحدة</th><th style="padding:10px; border:1px solid #ddd;">إجمالي الخسارة</th></tr>`; tb = data.items.map(i => `<tr><td style="padding:10px; border:1px solid #ddd;">${i.itemName}</td><td style="padding:10px; border:1px solid #ddd;">${i.type === 'rm' ? 'مادة أولية' : 'منتج جاهز'}</td><td style="padding:10px; border:1px solid #ddd;">${i.qtyEntered} ${i.unitEntered}</td><td style="padding:10px; border:1px solid #ddd;">${formatMoney(i.unitCost)}</td><td style="padding:10px; border:1px solid #ddd; color:var(--danger);">${formatMoney(i.totalCost)}</td></tr>`).join(''); document.getElementById('print-total').innerText = formatMoney(data.totalCost); document.getElementById('print-total').style.color = 'var(--danger)'; }
@@ -630,19 +987,44 @@
             renderPaginatedTable(db.products, 'table-products', 'pag-prd', 'prd', p => {
                 let cost = p.recipe.reduce((s, i) => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return s+(r?r.avgCost*i.qtyMUnit:0); }, 0);
                 let txt = p.recipe.map(i => { const r=db.rawMaterials.find(x=>x.id===i.rmId); return r ? `${i.qtyMUnit} ${r.mUnit} ${r.name}`:'<span class="text-danger">محذوف</span>'; }).join('<br>');
-                return `<tr><td>${p.name}</td><td>${p.unit}</td><td>${txt}</td><td>${formatMoney(cost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditPrd('${p.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deletePrd('${p.id}')">حذف</button></td></tr>`;
+                return `<tr><td>${p.name}</td><td>${p.unit}</td><td style="font-weight:bold; color:var(--success);">${formatMoney(p.sellPrice || 1)}</td><td>${txt}</td><td>${formatMoney(cost)}</td><td><button class="btn btn-warning btn-sm btn-action" onclick="openEditPrd('${p.id}')">تعديل</button><button class="btn btn-danger btn-sm btn-action" onclick="deletePrd('${p.id}')">حذف</button></td></tr>`;
             });
 
             renderPaginatedTable([...db.purchases].reverse(), 'table-purchases', 'pag-purchases', 'pur', p => `<tr><td>${p.id}</td><td>${p.date}</td><td>${p.items.length}</td><td>${formatMoney(p.totalCost)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('PUR', '${p.id}')">إظهار 👁️</button></td></tr>`);
-            renderPaginatedTable([...db.sales].reverse(), 'table-sales', 'pag-sales', 'sal', s => `<tr><td>${s.id}</td><td>${s.date}</td><td>${s.items.length}</td><td>${formatMoney(s.totalSale)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('SAL', '${s.id}')">إظهار 👁️</button></td></tr>`);
+            
+            renderPaginatedTable([...db.sales].reverse(), 'table-sales', 'pag-sales', 'sal', s => {
+                let branchInfo = s.branchName ? `<span class="badge-branch">${s.branchName} (${s.userName || 'المدير'})</span>` : '<span style="color:#777;">مبيعات مباشرة</span>';
+                return `<tr><td>${s.id}</td><td>${s.date}</td><td>${branchInfo}</td><td>${s.items.length}</td><td>${formatMoney(s.totalSale)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('SAL', '${s.id}')">إظهار 👁️</button></td></tr>`;
+            });
+
+            // جدول تسعير المنتجات داخل تبويب المبيعات
+            document.getElementById('table-sales-pricing').innerHTML = db.products.map(p => `
+                <tr>
+                    <td style="font-weight:bold;">${p.name}</td>
+                    <td>${p.unit}</td>
+                    <td>${formatMoney(p.avgCost)}</td>
+                    <td style="max-width:150px;"><input type="number" step="0.01" id="price-input-${p.id}" value="${p.sellPrice || 1}"></td>
+                    <td><button class="btn btn-success btn-sm" onclick="updateProductSellPrice('${p.id}')">حفظ السعر</button></td>
+                </tr>
+            `).join('');
+
             renderPaginatedTable([...db.manufacturing].reverse(), 'table-mfg-reports', 'pag-mfg', 'mfg', m => `<tr><td>${m.id}</td><td>${m.date}</td><td>${m.items.length}</td><td>${formatMoney(m.totalCost)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('MFG', '${m.id}')">إظهار 👁️</button></td></tr>`);
 
             let tRm = 0, tPrd = 0; db.rawMaterials.forEach(r => tRm += (r.stock * r.avgCost)); db.products.forEach(p => tPrd += (p.stock * p.avgCost));
             renderPaginatedTable(db.rawMaterials, 'table-inv-rm', 'pag-inv-rm', 'invRm', r => `<tr><td>${r.name}</td><td style="font-weight:bold;">${r.stock.toFixed(2)} ${r.mUnit}</td><td>${formatMoney(r.avgCost)}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(r.stock * r.avgCost)}</td></tr>`);
-            renderPaginatedTable(db.products, 'table-inv-prd', 'pag-inv-prd', 'invPrd', p => `<tr><td>${p.name}</td><td style="font-weight:bold;">${p.stock.toFixed(2)} ${p.unit}</td><td>${formatMoney(p.avgCost)}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(p.stock * p.avgCost)}</td></tr>`);
+            renderPaginatedTable(db.products, 'table-inv-prd', 'pag-inv-prd', 'invPrd', p => `<tr><td>${p.name}</td><td style="font-weight:bold;">${p.stock.toFixed(2)} ${p.unit}</td><td>${formatMoney(p.avgCost)}</td><td style="color:var(--success); font-weight:bold;">${formatMoney(p.sellPrice || 1)}</td><td style="color:var(--primary); font-weight:bold;">${formatMoney(p.stock * p.avgCost)}</td></tr>`);
             
             renderPaginatedTable([...db.adjustments].reverse(), 'table-adjustments', 'pag-adj', 'adj', a => { if(a.items) return `<tr><td>${a.id}</td><td>${a.date}</td><td>${a.items.length}</td><td class="${a.totalValue > 0 ? 'text-success' : (a.totalValue < 0 ? 'text-danger' : '')}" dir="ltr">${formatMoney(a.totalValue)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('ADJ', '${a.id}')">إظهار 👁️</button></td></tr>`; else return `<tr><td>${a.id}</td><td>${a.date}</td><td>1 (نسخة قديمة)</td><td class="${a.diffValue > 0 ? 'text-success' : (a.diffValue < 0 ? 'text-danger' : '')}" dir="ltr">${formatMoney(a.diffValue)}</td><td>-</td></tr>`; });
             renderPaginatedTable([...db.wastage].reverse(), 'table-wastage', 'pag-wst', 'wst', w => `<tr><td>${w.id}</td><td>${w.date}</td><td>${w.items.length}</td><td style="color:var(--danger);">${formatMoney(w.totalCost)}</td><td><button class="btn btn-info btn-sm" onclick="viewTransaction('WST', '${w.id}')">إظهار 👁️</button></td></tr>`);
+
+            // جداول الفروع والمستخدمين
+            document.getElementById('table-branches').innerHTML = db.branches.map(b => `
+                <tr><td>${b.name}</td><td><button class="btn btn-warning btn-sm" onclick="openEditBranch('${b.id}')">تعديل</button></td></tr>
+            `).join('');
+
+            document.getElementById('table-users').innerHTML = db.users.map(u => `
+                <tr><td style="font-weight:bold;">${u.name}</td><td><span class="badge-branch">${u.code}</span></td><td><button class="btn btn-warning btn-sm" onclick="openEditUser('${u.id}')">تعديل</button></td></tr>
+            `).join('');
 
             document.getElementById('total-val-rm').innerText = formatMoney(tRm); document.getElementById('total-val-prd').innerText = formatMoney(tPrd); document.getElementById('total-val-all').innerText = formatMoney(tRm + tPrd);
             document.getElementById('print-total').style.color = 'var(--primary)';
